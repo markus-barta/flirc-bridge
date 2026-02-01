@@ -1,6 +1,6 @@
 # flirc-bridge
 
-[![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](./VERSION)
+[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](./VERSION)
 
 Convert IR remote signals (via FLIRC USB receiver) to Sony Bravia TV commands over HTTP.
 
@@ -13,6 +13,7 @@ A lightweight Python bridge that runs on Raspberry Pi Zero W, replacing complex 
 - **39 Button Mappings**: Full remote control (numbers, navigation, media, apps, color buttons)
 - **Self-Healing**: Systemd service with auto-restart on failure
 - **MQTT Reporting**: Real-time status and event publishing
+- **Home Assistant Discovery**: Automatic entity configuration (Last Key, CPU, RAM, etc.)
 - **Debouncing**: Prevents double commands (configurable)
 - **Retry Logic**: HTTP retry with configurable attempts
 - **Lightweight**: Runs on Raspberry Pi Zero W (512MB RAM)
@@ -83,6 +84,7 @@ Full mapping in `ir-bridge.py` (IRCC_CODES dictionary).
 | `home/hsb2/ir-bridge/status` | Retained | Service health, version, and counters |
 | `home/hsb2/ir-bridge/events` | Event | Command execution details with scancodes |
 | `home/hsb2/ir-bridge/health` | Heartbeat | System metrics (CPU, RAM, Disk, Uptime) |
+| `home/hsb2/ir-bridge/availability` | LWT | `online` or `offline` |
 | `home/hsb2/ir-bridge/unknown` | Event | Unmapped key discovery |
 | `home/hsb2/ir-bridge/commands` | Input | Remote control (status, restart) |
 

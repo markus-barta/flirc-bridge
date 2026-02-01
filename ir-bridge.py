@@ -181,7 +181,7 @@ class IRBridge:
         return logger
     
     def _setup_mqtt(self) -> bool:
-        """Setup MQTT connection."""
+        """Setup MQTT connection with LWT and Discovery."""
         try:
             # Update to paho-mqtt v2 API
             try:
@@ -191,6 +191,13 @@ class IRBridge:
                 # Fallback for older paho-mqtt versions
                 self.mqtt_client = mqtt.Client()
             
+            # Set Last Will and Testament
+            self.mqtt_client.will_set(
+                f"{CONFIG['mqtt_topic']}/availability",
+                payload="offline",
+                retain=True
+            )
+
             if CONFIG['mqtt_user'] and CONFIG['mqtt_pass']:
                 self.mqtt_client.username_pw_set(
                     CONFIG['mqtt_user'], 
@@ -224,10 +231,109 @@ class IRBridge:
             self.logger.info("MQTT connected successfully")
             # Subscribe to control topics
             client.subscribe(f"{CONFIG['mqtt_topic']}/commands")
-            # Publish birth message
+            
+            # Publish birth messages
+            self.mqtt_client.publish(f"{CONFIG['mqtt_topic']}/availability", "online", retain=True)
+            self._setup_ha_discovery()
             self._publish_status()
         else:
             self.logger.error(f"MQTT connection failed with code {rc}")
+
+    def _setup_ha_discovery(self):
+        """Register device and entities in Home Assistant via MQTT Discovery."""
+        base_topic = CONFIG['mqtt_topic']
+        node_id = "flirc_bridge_hsb2"
+        device_info = {
+            "identifiers": [node_id],
+            "name": "FLIRC Bridge",
+            "model": "Raspberry Pi Zero W",
+            "manufacturer": "Markus Barta",
+            "sw_version": VERSION
+        }
+
+        # Entities to discover
+        entities = [
+            {
+                "type": "sensor",
+                "id": "last_key",
+                "name": "Last Key",
+                "icon": "mdi:remote",
+                "state_topic": f"{base_topic}/status",
+                "value_template": "{{ value_json.last_key }}"
+            },
+            {
+                "type": "sensor",
+                "id": "cpu_usage",
+                "name": "CPU Usage",
+                "unit": "%",
+                "class": "power_factor",
+                "icon": "mdi:cpu-64-bit",
+                "state_topic": f"{base_topic}/health",
+                "value_template": "{{ value_json.cpu.percent }}"
+            },
+            {
+                "type": "sensor",
+                "id": "memory_usage",
+                "name": "Memory Usage",
+                "unit": "%",
+                "icon": "mdi:memory",
+                "state_topic": f"{base_topic}/health",
+                "value_template": "{{ value_json.memory.percent_used }}"
+            },
+            {
+                "type": "sensor",
+                "id": "disk_usage",
+                "name": "Disk Usage",
+                "unit": "%",
+                "icon": "mdi:harddisk",
+                "state_topic": f"{base_topic}/health",
+                "value_template": "{{ value_json.disk.percent_used }}"
+            },
+            {
+                "type": "sensor",
+                "id": "uptime",
+                "name": "Uptime",
+                "unit": "s",
+                "class": "duration",
+                "icon": "mdi:clock-outline",
+                "state_topic": f"{base_topic}/health",
+                "value_template": "{{ value_json.uptime_seconds }}"
+            },
+            {
+                "type": "binary_sensor",
+                "id": "status",
+                "name": "Connectivity",
+                "device_class": "connectivity",
+                "state_topic": f"{base_topic}/availability",
+                "payload_on": "online",
+                "payload_off": "offline"
+            }
+        ]
+
+        for entity in entities:
+            discovery_topic = f"homeassistant/{entity['type']}/{node_id}/{entity['id']}/config"
+            payload = {
+                "name": entity['name'],
+                "unique_id": f"{node_id}_{entity['id']}",
+                "state_topic": entity['state_topic'],
+                "availability_topic": f"{base_topic}/availability",
+                "device": device_info
+            }
+            if "value_template" in entity:
+                payload["value_template"] = entity["value_template"]
+            if "unit" in entity:
+                payload["unit_of_measurement"] = entity["unit"]
+            if "class" in entity:
+                payload["device_class"] = entity["class"]
+            if "icon" in entity:
+                payload["icon"] = entity["icon"]
+            if "payload_on" in entity:
+                payload["payload_on"] = entity["payload_on"]
+                payload["payload_off"] = entity["payload_off"]
+
+            self.mqtt_client.publish(discovery_topic, json.dumps(payload), retain=True)
+
+        self.logger.info("Home Assistant Discovery payloads published")
     
     def _on_mqtt_disconnect(self, client, userdata, rc, properties=None):
         """MQTT disconnect callback."""

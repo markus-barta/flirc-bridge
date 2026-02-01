@@ -1,7 +1,7 @@
 # Product Requirements Document: FLIRC Bridge
 
 **Document ID:** FLIRC-BRIDGE-PRD-001
-**Version:** 0.2.1
+**Version:** 0.3.0
 **Status:** Active
 **Date:** 2026-02-01
 **Author:** Markus Barta
@@ -27,6 +27,7 @@ A lightweight Python-based bridge that converts Infrared (IR) remote signals rec
 - **MQTT Integration**: 
   - Publish real-time events and status.
   - **System Health Reporting**: Periodic heartbeat with CPU, RAM, Disk, and Uptime metrics.
+  - **Home Assistant Discovery**: Automatic configuration of entities and availability tracking (LWT).
   - Report unknown key codes for easy discovery/mapping.
   - Basic remote control (status requests, service restart).
 
