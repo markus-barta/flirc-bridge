@@ -302,12 +302,17 @@ class IRBridge:
         
         return False
     
-    def _handle_key(self, key_code: int):
-        """Handle a key press event."""
+    def _handle_key(self, key_code: int, is_hold: bool = False):
+        """Handle a key press event.
+        
+        Args:
+            key_code: The key code from evdev
+            is_hold: True if this is a key hold (repeat) event
+        """
         now = time.time() * 1000  # Current time in milliseconds
         
-        # Check debounce
-        if key_code in self.last_key_time:
+        # Only debounce initial presses, not hold repeats
+        if not is_hold and key_code in self.last_key_time:
             elapsed = now - self.last_key_time[key_code]
             if elapsed < CONFIG['debounce_ms']:
                 self.logger.debug(f"Key {key_code} debounced ({elapsed:.0f}ms)")
@@ -322,7 +327,10 @@ class IRBridge:
         
         command_name, ircc_code = IRCC_CODES[key_code]
         
-        self.logger.info(f"Key pressed: {command_name} (code: {key_code})")
+        if is_hold:
+            self.logger.debug(f"Key held: {command_name} (code: {key_code})")
+        else:
+            self.logger.info(f"Key pressed: {command_name} (code: {key_code})")
         self.stats['keys_pressed'] += 1
         self.stats['last_key'] = command_name
         
@@ -371,11 +379,15 @@ class IRBridge:
                 if not self.running:
                     break
                 
-                # Only process key press events (not release or hold)
+                # Process key press and hold events (for button holding)
                 if event.type == ecodes.EV_KEY:
                     key_event = categorize(event)
                     if key_event.keystate == key_event.key_down:
-                        self._handle_key(key_event.scancode)
+                        # Initial key press
+                        self._handle_key(key_event.scancode, is_hold=False)
+                    elif key_event.keystate == key_event.key_hold:
+                        # Key being held down - repeat the command
+                        self._handle_key(key_event.scancode, is_hold=True)
                         
         except Exception as e:
             self.logger.error(f"Input read error: {e}")

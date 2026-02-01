@@ -112,6 +112,23 @@ All settings via environment variables in `/etc/ir-bridge.env`:
 | `RETRY_COUNT` | 3 | HTTP retry attempts |
 | `RETRY_DELAY` | 1.0 | Seconds between retries |
 
+## Button Holding
+
+The bridge supports holding buttons (e.g., keeping volume up/down pressed for continuous adjustment):
+
+- **Single press**: Press and release quickly → one command
+- **Hold**: Keep button pressed → repeats command continuously
+
+**How it works:**
+- FLIRC generates `key_hold` events while button is held
+- Bridge sends command on each `key_hold` event (no debounce)
+- Initial press has debounce (300ms) to prevent accidental double-presses
+- TV receives continuous commands while button is held
+
+**Example:** Hold volume up button → TV volume increases continuously until released.
+
+**Note:** Some buttons (like power) work best with single press only. The bridge handles both modes automatically.
+
 ## Troubleshooting
 
 ### Check if FLIRC is detected
