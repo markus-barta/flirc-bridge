@@ -83,9 +83,10 @@ IRCC_CODES = {
     102: ('home', 'AAAAAQAAAAEAAABgAw=='),
     
     # Volume
+    # Note: FLIRC maps these swapped, so we swap them back here
     113: ('mute', 'AAAAAQAAAAEAAAAUAw=='),
-    114: ('volumedown', 'AAAAAQAAAAEAAAASAw=='),
-    115: ('volumeup', 'AAAAAQAAAAEAAAATAw=='),
+    114: ('volumeup', 'AAAAAQAAAAEAAAATAw=='),  # Swapped: was volumedown
+    115: ('volumedown', 'AAAAAQAAAAEAAAASAw=='),  # Swapped: was volumeup
     
     # Media
     164: ('play', 'AAAAAQAAAAEAAAANAw=='),
@@ -259,6 +260,28 @@ class IRBridge:
         except Exception as e:
             self.logger.error(f"Failed to publish event: {e}")
     
+    def _publish_unknown_key(self, key_code: int):
+        """Publish unknown key code to MQTT for discovery."""
+        if not self.mqtt_client:
+            return
+        
+        try:
+            event = {
+                'timestamp': datetime.now().isoformat(),
+                'key_code': key_code,
+                'message': f'Unknown key code {key_code} - not mapped to any command'
+            }
+            
+            self.mqtt_client.publish(
+                f"{CONFIG['mqtt_topic']}/unknown",
+                json.dumps(event)
+            )
+            
+            self.logger.info(f"Published unknown key {key_code} to MQTT")
+            
+        except Exception as e:
+            self.logger.error(f"Failed to publish unknown key: {e}")
+    
     def _send_ircc_command(self, ircc_code: str, command_name: str) -> bool:
         """Send IRCC command to Sony TV."""
         url = f"http://{CONFIG['sony_tv_ip']}/sony/IRCC"
@@ -322,7 +345,8 @@ class IRBridge:
         
         # Lookup command
         if key_code not in IRCC_CODES:
-            self.logger.debug(f"Unknown key code: {key_code}")
+            self.logger.info(f"Unknown key code: {key_code}")
+            self._publish_unknown_key(key_code)
             return
         
         command_name, ircc_code = IRCC_CODES[key_code]

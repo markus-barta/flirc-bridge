@@ -78,6 +78,7 @@ Full mapping in `ir-bridge.py` (IRCC_CODES dictionary).
 |-------|------|-------------|
 | `home/hsb2/ir-bridge/status` | Retained | Service status (JSON) |
 | `home/hsb2/ir-bridge/event` | Event | Per-keypress events |
+| `home/hsb2/ir-bridge/unknown` | Event | Unknown key codes (for discovery) |
 | `home/hsb2/ir-bridge/control` | Input | Control commands (status, restart) |
 
 ### Status Payload
