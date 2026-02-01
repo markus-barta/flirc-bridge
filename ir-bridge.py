@@ -89,8 +89,8 @@ IRCC_CODES = {
     105: ('left', 'AAAAAQAAAAEAAAA0Aw=='),
     106: ('right', 'AAAAAQAAAAEAAAAzAw=='),
     96: ('enter', 'AAAAAQAAAAEAAABlAw=='),
-    28: ('enter', 'AAAAAQAAAAEAAABlAw=='),  # KEY_ENTER alternate
-    1: ('back', 'AAAAAQAAAAEAAAAAw=='),
+    28: ('enter', 'AAAAAQAAAAEAAABlAw=='),
+    1: ('back', 'AAAAAQAAAAEAAABjAw=='),
     102: ('home', 'AAAAAQAAAAEAAABgAw=='),
     
     # Volume
@@ -107,19 +107,19 @@ IRCC_CODES = {
     165: ('previous', 'AAAAAQAAAAEAAAAYAw=='),
     
     # System
-    44: ('power', 'AAAAAQAAAAEAAAAVAw=='),  # Toggle
-    121: ('poweroff', 'AAAAAQAAAAEAAAAvAw=='), # Discrete Off
-    120: ('poweron', 'AAAAAQAAAAEAAAAuAw=='),  # Discrete On
+    44: ('power', 'AAAAAQAAAAEAAAAVAw=='),
     23: ('input', 'AAAAAQAAAAEAAAAlAw=='),
-    30: ('actionmenu', 'AAAAAQAAAAEAAAA6Aw=='),
-    49: ('netflix', 'AAAAAQAAAAEAAAAMAw=='),
-    25: ('youtube', 'AAAAAQAAAAEAAABDAw=='),
+    30: ('options', 'AAAAAgAAAJcAAAA2Aw=='),
+    139: ('display', 'AAAAAQAAAAEAAAAAw=='),
+    49: ('netflix', 'AAAAAgAAABoAAABbAw=='),
+    25: ('youtube', 'AAAAAgAAABoAAABbAw=='), # Often shared or app-specific
     
     # Color buttons
-#    19: ('red', 'AAAAAQAAAAEAAAATAw=='),
-#    34: ('green', 'AAAAAQAAAAEAAAAUAw=='),
-#    21: ('yellow', 'AAAAAQAAAAEAAAAVAw=='),
-#    48: ('blue', 'AAAAAQAAAAEAAAAWAw=='),
+    398: ('red', 'AAAAAgAAAJcAAAAlAw=='),
+    399: ('green', 'AAAAAgAAAJcAAAAmAw=='),
+    400: ('yellow', 'AAAAAgAAAJcAAAAnAw=='),
+    401: ('blue', 'AAAAAgAAAJcAAAAoAw=='),
+
 
     # Channel
     20: ('channelup', 'AAAAAQAAAAEAAAA+Aw=='),
