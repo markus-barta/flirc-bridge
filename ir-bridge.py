@@ -144,6 +144,8 @@ class IRBridge:
         self.last_key_time: Dict[int, float] = {}
         self.last_hold_time: Dict[int, float] = {}  # Track hold repeats
         self.stats = {
+            'version': VERSION,
+            'machine': 'hsb2',
             'started_at': datetime.now().isoformat(),
             'keys_pressed': 0,
             'commands_sent': 0,
@@ -192,6 +194,7 @@ class IRBridge:
             self.mqtt_client.on_connect = self._on_mqtt_connect
             self.mqtt_client.on_disconnect = self._on_mqtt_disconnect
             self.mqtt_client.on_message = self._on_mqtt_message
+
             
             self.mqtt_client.connect(
                 CONFIG['mqtt_broker'],
@@ -214,13 +217,13 @@ class IRBridge:
         if rc == 0:
             self.logger.info("MQTT connected successfully")
             # Subscribe to control topics
-            client.subscribe(f"{CONFIG['mqtt_topic']}/control")
+            client.subscribe(f"{CONFIG['mqtt_topic']}/commands")
             # Publish birth message
             self._publish_status()
         else:
             self.logger.error(f"MQTT connection failed with code {rc}")
     
-    def _on_mqtt_disconnect(self, client, userdata, rc):
+    def _on_mqtt_disconnect(self, client, userdata, rc, properties=None):
         """MQTT disconnect callback."""
         self.logger.warning(f"MQTT disconnected (rc={rc})")
     
@@ -230,12 +233,13 @@ class IRBridge:
             topic = msg.topic
             payload = msg.payload.decode('utf-8')
             
-            if topic.endswith('/control'):
+            if topic.endswith('/commands'):
                 if payload == 'status':
                     self._publish_status()
                 elif payload == 'restart':
                     self.logger.info("Restart requested via MQTT")
                     self.stop()
+
                 
         except Exception as e:
             self.logger.error(f"Error handling MQTT message: {e}")
@@ -260,7 +264,7 @@ class IRBridge:
         except Exception as e:
             self.logger.error(f"Failed to publish status: {e}")
     
-    def _publish_event(self, key_name: str, key_code: int, command_name: str, success: bool):
+    def _publish_event(self, key_name: str, key_code: int, command_name: str, success: bool, input_type: str):
         """Publish key event to MQTT."""
         if not self.mqtt_client:
             return
@@ -268,23 +272,31 @@ class IRBridge:
         try:
             event = {
                 'timestamp': datetime.now().isoformat(),
-                'key_name': key_name,
-                'key_code': key_code,
-                'scancode_hex': hex(key_code) if key_code > 1000 else None,
-                'command': command_name,
-                'success': success,
-                'tv_ip': CONFIG['sony_tv_ip']
+                'version': VERSION,
+                'machine': 'hsb2',
+                'event': {
+                    'key_name': key_name,
+                    'key_code': key_code,
+                    'key_code_hex': hex(key_code) if key_code > 1000 else None,
+                    'input_type': input_type,
+                    'command': command_name,
+                    'success': success
+                },
+                'target': {
+                    'type': 'sony_tv',
+                    'ip': CONFIG['sony_tv_ip']
+                }
             }
             
             self.mqtt_client.publish(
-                f"{CONFIG['mqtt_topic']}/event",
+                f"{CONFIG['mqtt_topic']}/events",
                 json.dumps(event)
             )
             
         except Exception as e:
             self.logger.error(f"Failed to publish event: {e}")
     
-    def _publish_unknown_key(self, key_code: int):
+    def _publish_unknown_key(self, key_code: int, input_type: str):
         """Publish unknown key code to MQTT for discovery."""
         if not self.mqtt_client:
             return
@@ -292,9 +304,14 @@ class IRBridge:
         try:
             event = {
                 'timestamp': datetime.now().isoformat(),
-                'key_code': key_code,
-                'scancode_hex': hex(key_code) if key_code > 1000 else None,
-                'message': f'Unknown key code {key_code} (hex: {hex(key_code)}) - not mapped'
+                'version': VERSION,
+                'machine': 'hsb2',
+                'unknown_key': {
+                    'key_code': key_code,
+                    'key_code_hex': hex(key_code),
+                    'input_type': input_type,
+                },
+                'message': f'Unmapped {input_type} detected: {key_code} ({hex(key_code)})'
             }
             
             self.mqtt_client.publish(
@@ -353,45 +370,42 @@ class IRBridge:
     def _handle_key(self, key_code: int, is_hold: bool = False):
         """Handle a key press event."""
         now = time.time() * 1000  # ms
+        input_type = 'hardware_scancode' if key_code > 1000 else 'linux_keycode'
         
         # Throttling for held buttons (don't overwhelm the TV)
-        # Sony TVs handle about 4-5 commands per second reliably
         if is_hold:
             if key_code in self.last_hold_time:
                 elapsed_hold = now - self.last_hold_time[key_code]
-                if elapsed_hold < 200:  # Limit to 5 commands per second
+                if elapsed_hold < 200:
                     return
             self.last_hold_time[key_code] = now
         else:
-            # Power button safety: Always debounce power toggle aggressively (1s)
+            # Power button safety: Aggressive debounce (1s)
             debounce_limit = CONFIG['debounce_ms']
             if key_code == 44:
                 debounce_limit = max(debounce_limit, 1000)
 
-            # Only debounce initial presses, not hold repeats
             if key_code in self.last_key_time:
                 elapsed = now - self.last_key_time[key_code]
                 if elapsed < debounce_limit:
-                    self.logger.debug(f"Key {key_code} debounced ({elapsed:.0f}ms)")
                     return
             
             self.last_key_time[key_code] = now
-            # Reset hold time on new press
             self.last_hold_time[key_code] = now
         
         # Lookup command
-
         if key_code not in IRCC_CODES:
-            self.logger.info(f"Unknown key code: {key_code}")
-            self._publish_unknown_key(key_code)
+            self.logger.info(f"Unknown {input_type}: {key_code} ({hex(key_code)})")
+            self._publish_unknown_key(key_code, input_type)
             return
         
         command_name, ircc_code = IRCC_CODES[key_code]
         
         if is_hold:
-            self.logger.debug(f"Key held: {command_name} (code: {key_code})")
+            self.logger.debug(f"Key held: {command_name} ({input_type}: {key_code})")
         else:
-            self.logger.info(f"Key pressed: {command_name} (code: {key_code})")
+            self.logger.info(f"Key pressed: {command_name} ({input_type}: {key_code})")
+            
         self.stats['keys_pressed'] += 1
         self.stats['last_key'] = command_name
         
@@ -405,7 +419,8 @@ class IRBridge:
             self.stats['errors'] += 1
         
         # Publish event
-        self._publish_event(command_name, key_code, command_name, success)
+        self._publish_event(command_name, key_code, command_name, success, input_type)
+
     
     def _setup_input(self) -> bool:
         """Setup input device (FLIRC)."""
