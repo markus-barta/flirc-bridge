@@ -1,7 +1,7 @@
 # Operations Manual: FLIRC Bridge
 
 **Document ID:** FLIRC-BRIDGE-OPS-001
-**Version:** 0.3.0
+**Version:** 0.3.1
 **Status:** Active
 **Date:** 2026-02-01
 

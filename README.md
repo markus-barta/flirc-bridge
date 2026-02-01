@@ -1,6 +1,6 @@
 # flirc-bridge
 
-[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](./VERSION)
+[![Version](https://img.shields.io/badge/version-0.3.1-blue.svg)](./VERSION)
 
 Convert IR remote signals (via FLIRC USB receiver) to Sony Bravia TV commands over HTTP.
 

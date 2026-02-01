@@ -1,7 +1,7 @@
 # Product Requirements Document: FLIRC Bridge
 
 **Document ID:** FLIRC-BRIDGE-PRD-001
-**Version:** 0.3.0
+**Version:** 0.3.1
 **Status:** Active
 **Date:** 2026-02-01
 **Author:** Markus Barta
