@@ -138,6 +138,7 @@ class IRBridge:
         self.input_device: Optional[Any] = None
         self.running = False
         self.last_key_time: Dict[int, float] = {}
+        self.last_hold_time: Dict[int, float] = {}  # Track hold repeats
         self.stats = {
             'started_at': datetime.now().isoformat(),
             'keys_pressed': 0,
@@ -345,24 +346,35 @@ class IRBridge:
     
     def _handle_key(self, key_code: int, is_hold: bool = False):
         """Handle a key press event."""
-        now = time.time() * 1000
+        now = time.time() * 1000  # ms
         
-        # Power button safety: Always debounce power toggle aggressively (1s)
-        # to prevent accidental double-toggles from multi-signal environments
-        debounce_limit = CONFIG['debounce_ms']
-        if key_code == 44:
-            debounce_limit = max(debounce_limit, 1000)
+        # Throttling for held buttons (don't overwhelm the TV)
+        # Sony TVs handle about 4-5 commands per second reliably
+        if is_hold:
+            if key_code in self.last_hold_time:
+                elapsed_hold = now - self.last_hold_time[key_code]
+                if elapsed_hold < 200:  # Limit to 5 commands per second
+                    return
+            self.last_hold_time[key_code] = now
+        else:
+            # Power button safety: Always debounce power toggle aggressively (1s)
+            debounce_limit = CONFIG['debounce_ms']
+            if key_code == 44:
+                debounce_limit = max(debounce_limit, 1000)
 
-        # Only debounce initial presses, not hold repeats
-        if not is_hold and key_code in self.last_key_time:
-            elapsed = now - self.last_key_time[key_code]
-            if elapsed < debounce_limit:
-                self.logger.debug(f"Key {key_code} debounced ({elapsed:.0f}ms)")
-                return
-        
-        self.last_key_time[key_code] = now
+            # Only debounce initial presses, not hold repeats
+            if key_code in self.last_key_time:
+                elapsed = now - self.last_key_time[key_code]
+                if elapsed < debounce_limit:
+                    self.logger.debug(f"Key {key_code} debounced ({elapsed:.0f}ms)")
+                    return
+            
+            self.last_key_time[key_code] = now
+            # Reset hold time on new press
+            self.last_hold_time[key_code] = now
         
         # Lookup command
+
         if key_code not in IRCC_CODES:
             self.logger.info(f"Unknown key code: {key_code}")
             self._publish_unknown_key(key_code)
