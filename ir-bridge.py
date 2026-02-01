@@ -83,10 +83,10 @@ IRCC_CODES = {
     102: ('home', 'AAAAAQAAAAEAAABgAw=='),
     
     # Volume
-    # Note: FLIRC maps these swapped, so we swap them back here
+    # Note: FLIRC key codes are swapped vs physical labels
     113: ('mute', 'AAAAAQAAAAEAAAAUAw=='),
-    114: ('volumeup', 'AAAAAQAAAAEAAAATAw=='),  # Swapped: was volumedown
-    115: ('volumedown', 'AAAAAQAAAAEAAAASAw=='),  # Swapped: was volumeup
+    114: ('volumedown', 'AAAAAQAAAAEAAAASAw=='),  # Physical volumedown button
+    115: ('volumeup', 'AAAAAQAAAAEAAAATAw=='),  # Physical volumeup button
     
     # Media
     164: ('play', 'AAAAAQAAAAEAAAANAw=='),
