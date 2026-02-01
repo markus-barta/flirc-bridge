@@ -1,0 +1,37 @@
+[Unit]
+Description=IR to Sony TV Bridge
+Documentation=file:///home/mba/ir-bridge/README.md
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=mba
+Group=input
+WorkingDirectory=/home/mba/ir-bridge
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=/etc/ir-bridge.env
+ExecStart=/usr/bin/python3 /home/mba/ir-bridge/ir-bridge.py
+ExecStop=/bin/kill -TERM $MAINPID
+
+# Restart configuration (self-healing)
+Restart=always
+RestartSec=5
+StartLimitInterval=60s
+StartLimitBurst=3
+
+# Graceful shutdown
+TimeoutStopSec=10
+KillMode=mixed
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=false
+ReadWritePaths=/home/mba/ir-bridge/logs
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+[Install]
+WantedBy=multi-user.target
