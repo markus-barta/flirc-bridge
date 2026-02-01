@@ -107,7 +107,9 @@ IRCC_CODES = {
     165: ('previous', 'AAAAAQAAAAEAAAAYAw=='),
     
     # System
-    44: ('power', 'AAAAAQAAAAEAAAAVAw=='),
+    44: ('power', 'AAAAAQAAAAEAAAAVAw=='),  # Toggle
+    121: ('poweroff', 'AAAAAQAAAAEAAAAvAw=='), # Discrete Off
+    120: ('poweron', 'AAAAAQAAAAEAAAAuAw=='),  # Discrete On
     23: ('input', 'AAAAAQAAAAEAAAAlAw=='),
     30: ('actionmenu', 'AAAAAQAAAAEAAAA6Aw=='),
     49: ('netflix', 'AAAAAQAAAAEAAAAMAw=='),
@@ -168,7 +170,13 @@ class IRBridge:
     def _setup_mqtt(self) -> bool:
         """Setup MQTT connection."""
         try:
-            self.mqtt_client = mqtt.Client()
+            # Update to paho-mqtt v2 API
+            try:
+                from paho.mqtt.enums import CallbackAPIVersion
+                self.mqtt_client = mqtt.Client(CallbackAPIVersion.VERSION2)
+            except ImportError:
+                # Fallback for older paho-mqtt versions
+                self.mqtt_client = mqtt.Client()
             
             if CONFIG['mqtt_user'] and CONFIG['mqtt_pass']:
                 self.mqtt_client.username_pw_set(
@@ -196,8 +204,8 @@ class IRBridge:
             self.logger.error(f"MQTT connection failed: {e}")
             return False
     
-    def _on_mqtt_connect(self, client, userdata, flags, rc):
-        """MQTT connect callback."""
+    def _on_mqtt_connect(self, client, userdata, flags, rc, properties=None):
+        """MQTT connect callback (paho-mqtt v2 compatible)."""
         if rc == 0:
             self.logger.info("MQTT connected successfully")
             # Subscribe to control topics
@@ -336,18 +344,19 @@ class IRBridge:
         return False
     
     def _handle_key(self, key_code: int, is_hold: bool = False):
-        """Handle a key press event.
+        """Handle a key press event."""
+        now = time.time() * 1000
         
-        Args:
-            key_code: The key code from evdev
-            is_hold: True if this is a key hold (repeat) event
-        """
-        now = time.time() * 1000  # Current time in milliseconds
-        
+        # Power button safety: Always debounce power toggle aggressively (1s)
+        # to prevent accidental double-toggles from multi-signal environments
+        debounce_limit = CONFIG['debounce_ms']
+        if key_code == 44:
+            debounce_limit = max(debounce_limit, 1000)
+
         # Only debounce initial presses, not hold repeats
         if not is_hold and key_code in self.last_key_time:
             elapsed = now - self.last_key_time[key_code]
-            if elapsed < CONFIG['debounce_ms']:
+            if elapsed < debounce_limit:
                 self.logger.debug(f"Key {key_code} debounced ({elapsed:.0f}ms)")
                 return
         

@@ -35,6 +35,7 @@ echo "✓ hsb2 is reachable"
 echo ""
 echo "[2/5] Copying files to hsb2..."
 scp "$REPO_ROOT/ir-bridge.py" "$HSB2_HOST:$REMOTE_DIR/"
+scp "$REPO_ROOT/VERSION" "$HSB2_HOST:$REMOTE_DIR/"
 scp "$REPO_ROOT/ir-bridge.service" "$HSB2_HOST:$REMOTE_DIR/" 2>/dev/null || echo "Note: ir-bridge.service not updated (optional)"
 echo "✓ Files copied"
 
