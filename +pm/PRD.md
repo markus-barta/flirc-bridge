@@ -20,6 +20,7 @@ A lightweight Python-based bridge that converts Infrared (IR) remote signals rec
 
 ### 3.1 Functionality
 - **IR Translation**: Map Linux input events (evdev) from FLIRC to Sony IRCC (Base64) commands.
+- **Persistent Input**: Support for stable device identification via `/dev/input/by-id/` or name-based auto-discovery.
 - **Sony TV Control**: Send commands over HTTP using Pre-Shared Key (PSK) authentication.
 - **Button Holding**: Support continuous command repetition when a remote button is held down (e.g., volume ramp).
 - **Debouncing**: Configurable software debouncing to prevent accidental double-triggers.

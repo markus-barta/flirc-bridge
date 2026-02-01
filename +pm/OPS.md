@@ -50,11 +50,12 @@ sudo systemctl restart ir-bridge
 ## 4. Troubleshooting & Diagnostics
 
 ### 4.1 Hardware Verification
-Check if the FLIRC USB receiver is detected by the OS:
+Check if the FLIRC USB receiver is detected by the OS and find its persistent ID:
 ```bash
 lsusb | grep -i flirc
-cat /proc/bus/input/devices | grep -A5 flirc
+ls -la /dev/input/by-id/ | grep flirc
 ```
+*Tip: Use the path in `/dev/input/by-id/` in your config for 100% persistence across reboots.*
 
 ### 4.2 Input Testing
 Verify that IR signals are being translated to key events:
