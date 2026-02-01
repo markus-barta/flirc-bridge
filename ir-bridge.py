@@ -270,6 +270,7 @@ class IRBridge:
                 'timestamp': datetime.now().isoformat(),
                 'key_name': key_name,
                 'key_code': key_code,
+                'scancode_hex': hex(key_code) if key_code > 1000 else None,
                 'command': command_name,
                 'success': success,
                 'tv_ip': CONFIG['sony_tv_ip']
@@ -292,7 +293,8 @@ class IRBridge:
             event = {
                 'timestamp': datetime.now().isoformat(),
                 'key_code': key_code,
-                'message': f'Unknown key code {key_code} - not mapped to any command'
+                'scancode_hex': hex(key_code) if key_code > 1000 else None,
+                'message': f'Unknown key code {key_code} (hex: {hex(key_code)}) - not mapped'
             }
             
             self.mqtt_client.publish(
