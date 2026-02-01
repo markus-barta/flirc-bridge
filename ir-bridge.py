@@ -156,8 +156,8 @@ class IRBridge:
             'keys_pressed': 0,
             'commands_sent': 0,
             'errors': 0,
-            'last_command': None,
-            'last_key': None,
+            'last_command': "",
+            'last_key': "",
             'status': 'initializing'
         }
         
@@ -335,8 +335,8 @@ class IRBridge:
 
         self.logger.info("Home Assistant Discovery payloads published")
     
-    def _on_mqtt_disconnect(self, client, userdata, rc, properties=None):
-        """MQTT disconnect callback."""
+    def _on_mqtt_disconnect(self, client, userdata, flags, rc, properties=None):
+        """MQTT disconnect callback (paho-mqtt v2 compatible)."""
         self.logger.warning(f"MQTT disconnected (rc={rc})")
     
     def _on_mqtt_message(self, client, userdata, msg):
@@ -532,6 +532,9 @@ class IRBridge:
         
         # Publish event
         self._publish_event(command_name, key_code, command_name, success, input_type)
+        
+        # Immediate status update for Home Assistant responsiveness
+        self._publish_status()
 
     
     def _setup_input(self) -> bool:
