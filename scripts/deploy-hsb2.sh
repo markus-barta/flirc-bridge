@@ -7,6 +7,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 HSB2_HOST="mba@192.168.1.95"
 REMOTE_DIR="/home/mba/ir-bridge"
 
@@ -16,9 +17,8 @@ echo "=========================================="
 echo ""
 
 # Check if we're in the right directory
-if [ ! -f "$SCRIPT_DIR/ir-bridge.py" ]; then
-	echo "Error: ir-bridge.py not found in current directory"
-	echo "Please run this script from the flirc-bridge repo root"
+if [ ! -f "$REPO_ROOT/ir-bridge.py" ]; then
+	echo "Error: ir-bridge.py not found in $REPO_ROOT"
 	exit 1
 fi
 
@@ -34,8 +34,8 @@ echo "✓ hsb2 is reachable"
 # Copy files
 echo ""
 echo "[2/5] Copying files to hsb2..."
-scp "$SCRIPT_DIR/ir-bridge.py" "$HSB2_HOST:$REMOTE_DIR/"
-scp "$SCRIPT_DIR/ir-bridge.service" "$HSB2_HOST:$REMOTE_DIR/" 2>/dev/null || echo "Note: ir-bridge.service not updated (optional)"
+scp "$REPO_ROOT/ir-bridge.py" "$HSB2_HOST:$REMOTE_DIR/"
+scp "$REPO_ROOT/ir-bridge.service" "$HSB2_HOST:$REMOTE_DIR/" 2>/dev/null || echo "Note: ir-bridge.service not updated (optional)"
 echo "✓ Files copied"
 
 # Restart service

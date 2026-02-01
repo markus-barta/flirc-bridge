@@ -7,6 +7,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 INSTALL_DIR="/home/mba/ir-bridge"
 CONFIG_FILE="/etc/ir-bridge.env"
 SERVICE_FILE="/etc/systemd/system/ir-bridge.service"
@@ -41,7 +42,7 @@ $SUDO usermod -a -G input mba
 echo "[4/7] Creating installation directory..."
 $SUDO mkdir -p "$INSTALL_DIR"
 $SUDO mkdir -p "$INSTALL_DIR/logs"
-$SUDO cp "$SCRIPT_DIR/ir-bridge.py" "$INSTALL_DIR/"
+$SUDO cp "$REPO_ROOT/ir-bridge.py" "$INSTALL_DIR/"
 $SUDO chmod +x "$INSTALL_DIR/ir-bridge.py"
 $SUDO chown -R mba:mba "$INSTALL_DIR"
 
@@ -52,7 +53,7 @@ if [ -f "$CONFIG_FILE" ]; then
   echo "Keeping existing configuration."
 else
   echo "Creating configuration file from template..."
-  $SUDO cp "$SCRIPT_DIR/ir-bridge.env.example" "$CONFIG_FILE"
+  $SUDO cp "$REPO_ROOT/ir-bridge.env.example" "$CONFIG_FILE"
   $SUDO chmod 600 "$CONFIG_FILE"
   echo ""
   echo "⚠️  IMPORTANT: Edit $CONFIG_FILE and set SONY_TV_PSK!"
@@ -61,7 +62,7 @@ fi
 
 # Step 6: Install systemd service
 echo "[6/7] Installing systemd service..."
-$SUDO cp "$SCRIPT_DIR/ir-bridge.service" "$SERVICE_FILE"
+$SUDO cp "$REPO_ROOT/ir-bridge.service" "$SERVICE_FILE"
 $SUDO systemctl daemon-reload
 
 # Step 7: Enable service
