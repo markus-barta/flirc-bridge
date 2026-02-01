@@ -1,8 +1,12 @@
 # flirc-bridge
 
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](./VERSION)
+
 Convert IR remote signals (via FLIRC USB receiver) to Sony Bravia TV commands over HTTP.
 
 A lightweight Python bridge that runs on Raspberry Pi Zero W, replacing complex Node-RED/Docker setups with a simple, reliable service.
+
+**Version:** See [VERSION](./VERSION) file
 
 ## Features
 

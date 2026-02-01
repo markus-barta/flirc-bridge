@@ -33,6 +33,17 @@ from typing import Optional, Dict, Any
 import requests
 import paho.mqtt.client as mqtt
 
+# Read version from VERSION file
+def get_version():
+    try:
+        version_file = os.path.join(os.path.dirname(__file__), 'VERSION')
+        with open(version_file, 'r') as f:
+            return f.read().strip()
+    except:
+        return 'unknown'
+
+VERSION = get_version()
+
 # Try to import evdev, handle gracefully if not available
 try:
     from evdev import InputDevice, categorize, ecodes
@@ -52,13 +63,13 @@ CONFIG = {
     'mqtt_pass': os.getenv('MQTT_PASS', ''),
     'mqtt_topic': os.getenv('MQTT_TOPIC', 'home/hsb2/ir-bridge'),
     'log_level': os.getenv('LOG_LEVEL', 'INFO'),
-    'debounce_ms': int(os.getenv('DEBOUNCE_MS', '300')),
+    'debounce_ms': int(os.getenv('DEBOUNCE_MS', '100')),
     'retry_count': int(os.getenv('RETRY_COUNT', '3')),
     'retry_delay': float(os.getenv('RETRY_DELAY', '1.0')),
 }
 
 # Sony IRCC command mapping
-# Maps Linux input event codes to Sony IRCC Base64 commands
+# Maps Linux input event codes (from flirc) to Sony IRCC Base64 commands (to send to TV)
 IRCC_CODES = {
     # Numbers
     2: ('num1', 'AAAAAQAAAAEAAAAAAw=='),
@@ -83,10 +94,9 @@ IRCC_CODES = {
     102: ('home', 'AAAAAQAAAAEAAABgAw=='),
     
     # Volume
-    # Note: FLIRC key codes are swapped vs physical labels
     113: ('mute', 'AAAAAQAAAAEAAAAUAw=='),
-    114: ('volumedown', 'AAAAAQAAAAEAAAASAw=='),  # Physical volumedown button
-    115: ('volumeup', 'AAAAAQAAAAEAAAATAw=='),  # Physical volumeup button
+    114: ('volumedown', 'AAAAAQAAAAEAAAATAw=='),
+    115: ('volumeup', 'AAAAAQAAAAEAAAASAw=='),  
     
     # Media
     164: ('play', 'AAAAAQAAAAEAAAANAw=='),
@@ -104,11 +114,11 @@ IRCC_CODES = {
     25: ('youtube', 'AAAAAQAAAAEAAABDAw=='),
     
     # Color buttons
-    19: ('red', 'AAAAAQAAAAEAAAATAw=='),
-    34: ('green', 'AAAAAQAAAAEAAAAUAw=='),
-    21: ('yellow', 'AAAAAQAAAAEAAAAVAw=='),
-    48: ('blue', 'AAAAAQAAAAEAAAAWAw=='),
-    
+#    19: ('red', 'AAAAAQAAAAEAAAATAw=='),
+#    34: ('green', 'AAAAAQAAAAEAAAAUAw=='),
+#    21: ('yellow', 'AAAAAQAAAAEAAAAVAw=='),
+#    48: ('blue', 'AAAAAQAAAAEAAAAWAw=='),
+
     # Channel
     20: ('channelup', 'AAAAAQAAAAEAAAA+Aw=='),
     47: ('channeldown', 'AAAAAQAAAAEAAAA9Aw=='),
@@ -425,7 +435,7 @@ class IRBridge:
     def start(self):
         """Start the IR bridge."""
         self.logger.info("=" * 60)
-        self.logger.info("IR → Sony TV Bridge Starting")
+        self.logger.info(f"IR → Sony TV Bridge v{VERSION}")
         self.logger.info("=" * 60)
         
         # Setup signal handlers
