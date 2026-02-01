@@ -78,6 +78,9 @@ Test if the TV is reachable on the network:
 ping <SONY_TV_IP>
 ```
 
+### 4.5 System Services
+Note: The `apcupsd` service is disabled on `hsb2` to prevent boot-time warnings as it is not currently used.
+
 ## 5. Maintenance Tasks
 
 ### 5.1 Updating Button Mappings
