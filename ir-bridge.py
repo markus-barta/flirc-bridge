@@ -69,8 +69,12 @@ CONFIG = {
 }
 
 # Sony IRCC command mapping
-# Maps Linux input event codes (from flirc) to Sony IRCC Base64 commands (to send to TV)
+# Maps hardware scancodes (or Linux key codes) to Sony IRCC commands
 IRCC_CODES = {
+    # Volume (using hardware scancodes)
+    0xc00e9: ('volumeup', 'AAAAAQAAAAEAAAASAw=='),
+    0xc00ea: ('volumedown', 'AAAAAQAAAAEAAAATAw=='),
+    
     # Numbers
     2: ('num1', 'AAAAAQAAAAEAAAAAAw=='),
     3: ('num2', 'AAAAAQAAAAEAAAABAw=='),
@@ -93,7 +97,7 @@ IRCC_CODES = {
     1: ('back', 'AAAAAQAAAAEAAABjAw=='),
     102: ('home', 'AAAAAQAAAAEAAABgAw=='),
     
-    # Volume
+    # Volume (fallbacks)
     113: ('mute', 'AAAAAQAAAAEAAAAUAw=='),
     114: ('volumedown', 'AAAAAQAAAAEAAAATAw=='),
     115: ('volumeup', 'AAAAAQAAAAEAAAASAw=='),  
@@ -112,14 +116,13 @@ IRCC_CODES = {
     30: ('options', 'AAAAAgAAAJcAAAA2Aw=='),
     139: ('display', 'AAAAAQAAAAEAAAAAw=='),
     49: ('netflix', 'AAAAAgAAABoAAABbAw=='),
-    25: ('youtube', 'AAAAAgAAABoAAABbAw=='), # Often shared or app-specific
+    25: ('youtube', 'AAAAAgAAABoAAABbAw=='), 
     
-    # Color buttons
-    398: ('red', 'AAAAAgAAAJcAAAAlAw=='),
-    399: ('green', 'AAAAAgAAAJcAAAAmAw=='),
-    400: ('yellow', 'AAAAAgAAAJcAAAAnAw=='),
-    401: ('blue', 'AAAAAgAAAJcAAAAoAw=='),
-
+    # Color buttons (using hardware scancodes)
+    0x70015: ('red', 'AAAAAgAAAJcAAAAlAw=='),
+    0x7000a: ('green', 'AAAAAgAAAJcAAAAmAw=='),
+    0x7001c: ('yellow', 'AAAAAgAAAJcAAAAnAw=='),
+    0x70005: ('blue', 'AAAAAgAAAJcAAAAoAw=='),
 
     # Channel
     20: ('channelup', 'AAAAAQAAAAEAAAA+Aw=='),
@@ -127,6 +130,7 @@ IRCC_CODES = {
     17: ('hdmi1', 'AAAAAQAAAAEAAABAAw=='),
     22: ('hdmi2', 'AAAAAQAAAAEAAABBAw=='),
 }
+
 
 
 class IRBridge:
@@ -447,19 +451,32 @@ class IRBridge:
         try:
             self.logger.info("Starting input event loop")
             
+            scancode = None
             for event in self.input_device.read_loop():
                 if not self.running:
                     break
                 
-                # Process key press and hold events (for button holding)
+                # Capture MSC_SCAN for debugging/discovery
+                if event.type == ecodes.EV_MSC and event.code == ecodes.MSC_SCAN:
+                    scancode = event.value
+                    self.logger.debug(f"Hardware Scancode received: {hex(scancode)}")
+                
+                # Process key press and hold events
                 if event.type == ecodes.EV_KEY:
                     key_event = categorize(event)
+                    
+                    # We prefer hardware scancodes if available, 
+                    # fallback to Linux key scancodes
+                    target_code = scancode if scancode is not None else key_event.scancode
+                    
                     if key_event.keystate == key_event.key_down:
-                        # Initial key press
-                        self._handle_key(key_event.scancode, is_hold=False)
+                        self.logger.info(f"Input: Code {hex(target_code) if scancode else target_code} ({key_event.keycode})")
+                        self._handle_key(target_code, is_hold=False)
                     elif key_event.keystate == key_event.key_hold:
-                        # Key being held down - repeat the command
-                        self._handle_key(key_event.scancode, is_hold=True)
+                        self._handle_key(target_code, is_hold=True)
+                    
+                    # Reset scancode for next event pair
+                    scancode = None
                         
         except Exception as e:
             self.logger.error(f"Input read error: {e}")
