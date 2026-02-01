@@ -387,13 +387,30 @@ class IRBridge:
             return True
         
         try:
-            self.input_device = InputDevice(CONFIG['flirc_device'])
-            self.logger.info(f"Input device opened: {self.input_device.name}")
-            self.logger.info(f"Device path: {CONFIG['flirc_device']}")
+            # Try to find FLIRC device automatically if not explicitly configured
+            device_path = CONFIG['flirc_device']
+            
+            from evdev import list_devices
+            devices = [InputDevice(path) for path in list_devices()]
+            
+            flirc_devices = [d for d in devices if 'flirc' in d.name.lower()]
+            
+            if flirc_devices:
+                # Use the first FLIRC device found
+                target_device = flirc_devices[0]
+                self.input_device = target_device
+                self.logger.info(f"Auto-discovered FLIRC device: {target_device.name}")
+                self.logger.info(f"Device path: {target_device.path}")
+                return True
+            
+            # Fallback to configured path if no FLIRC found by name
+            self.input_device = InputDevice(device_path)
+            self.logger.info(f"Using configured input device: {self.input_device.name}")
+            self.logger.info(f"Device path: {device_path}")
             return True
             
         except Exception as e:
-            self.logger.error(f"Failed to open input device: {e}")
+            self.logger.error(f"Failed to setup input device: {e}")
             return False
     
     def _read_input(self):

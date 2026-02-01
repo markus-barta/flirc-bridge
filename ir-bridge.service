@@ -1,8 +1,8 @@
 [Unit]
 Description=IR to Sony TV Bridge
 Documentation=file:///home/mba/ir-bridge/README.md
-After=network.target
-Wants=network.target
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
