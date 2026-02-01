@@ -1,6 +1,6 @@
 # flirc-bridge
 
-[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](./VERSION)
+[![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](./VERSION)
 
 Convert IR remote signals (via FLIRC USB receiver) to Sony Bravia TV commands over HTTP.
 
@@ -80,21 +80,35 @@ Full mapping in `ir-bridge.py` (IRCC_CODES dictionary).
 
 | Topic | Type | Description |
 |-------|------|-------------|
-| `home/hsb2/ir-bridge/status` | Retained | Service status (JSON) |
-| `home/hsb2/ir-bridge/event` | Event | Per-keypress events |
-| `home/hsb2/ir-bridge/unknown` | Event | Unknown key codes (for discovery) |
-| `home/hsb2/ir-bridge/control` | Input | Control commands (status, restart) |
+| `home/hsb2/ir-bridge/status` | Retained | Service health, version, and counters |
+| `home/hsb2/ir-bridge/events` | Event | Command execution details with scancodes |
+| `home/hsb2/ir-bridge/health` | Heartbeat | System metrics (CPU, RAM, Disk, Uptime) |
+| `home/hsb2/ir-bridge/unknown` | Event | Unmapped key discovery |
+| `home/hsb2/ir-bridge/commands` | Input | Remote control (status, restart) |
 
 ### Status Payload
 
 ```json
 {
-  "started_at": "2026-01-31T15:30:00",
+  "version": "0.2.1",
+  "machine": "hsb2",
+  "status": "running",
   "keys_pressed": 42,
   "commands_sent": 41,
   "errors": 1,
   "last_command": "volumeup",
-  "status": "running"
+  "started_at": "2026-02-01T12:00:00"
+}
+```
+
+### Health Payload
+
+```json
+{
+  "cpu": { "percent": 5.2, "load_avg": [0.1, 0.2, 0.5] },
+  "memory": { "total_mb": 440.0, "available_mb": 210.5, "percent_used": 52.1 },
+  "disk": { "total_gb": 14.2, "used_gb": 3.1, "percent_used": 22.4 },
+  "uptime_seconds": 86400
 }
 ```
 

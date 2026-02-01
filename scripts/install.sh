@@ -32,7 +32,7 @@ $SUDO apt-get install -y python3 python3-pip
 
 # Step 2: Install Python dependencies
 echo "[2/7] Installing Python dependencies..."
-$SUDO pip3 install evdev requests paho-mqtt
+$SUDO pip3 install evdev requests paho-mqtt psutil
 
 # Step 3: Add user to input group (for reading input devices)
 echo "[3/7] Configuring user permissions..."

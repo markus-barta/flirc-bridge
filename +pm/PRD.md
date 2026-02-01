@@ -1,7 +1,7 @@
 # Product Requirements Document: FLIRC Bridge
 
 **Document ID:** FLIRC-BRIDGE-PRD-001
-**Version:** 0.2.0
+**Version:** 0.2.1
 **Status:** Active
 **Date:** 2026-02-01
 **Author:** Markus Barta
@@ -26,6 +26,7 @@ A lightweight Python-based bridge that converts Infrared (IR) remote signals rec
 - **Debouncing**: Configurable software debouncing to prevent accidental double-triggers.
 - **MQTT Integration**: 
   - Publish real-time events and status.
+  - **System Health Reporting**: Periodic heartbeat with CPU, RAM, Disk, and Uptime metrics.
   - Report unknown key codes for easy discovery/mapping.
   - Basic remote control (status requests, service restart).
 

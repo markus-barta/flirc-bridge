@@ -15,7 +15,7 @@ Trigger the professional release pipeline.
     - If tag exists, **STOP** and inform the user. Ask them if they want to bump now!
 2.  **Git Tagging:**
     -   Verify the working directory is clean.
-    -   Create a tag matching the version (e.g., `v0.2.0`).
+    -   Create a tag matching the version (e.g., `v0.2.1`).
     -   Push the specific tag to `origin`: `git push origin v<version>`.
 3.  **CI Monitoring:** 
     -   Open the GitHub Actions Page: `open "https://github.com/markus-barta/flirc-bridge/actions"`.

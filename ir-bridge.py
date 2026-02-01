@@ -33,6 +33,12 @@ from typing import Optional, Dict, Any
 import requests
 import paho.mqtt.client as mqtt
 
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
+
 # Read version from VERSION file
 def get_version():
     try:
@@ -528,10 +534,14 @@ class IRBridge:
         # Publish initial status
         self._publish_status()
         
-        # Start status publishing thread
+        # Start background loops
         status_thread = threading.Thread(target=self._status_loop)
         status_thread.daemon = True
         status_thread.start()
+        
+        health_thread = threading.Thread(target=self._health_loop)
+        health_thread.daemon = True
+        health_thread.start()
         
         self.logger.info("Bridge started successfully")
         
@@ -553,6 +563,73 @@ class IRBridge:
             self._publish_status()
             time.sleep(60)  # Publish status every minute
     
+    def _health_loop(self):
+        """Background thread to periodically publish system health."""
+        while self.running:
+            self._publish_health()
+            time.sleep(60)
+
+    def _get_system_health(self) -> Dict[str, Any]:
+        """Gather system metrics using psutil."""
+        health = {
+            'timestamp': datetime.now().isoformat(),
+            'version': VERSION,
+            'machine': 'hsb2',
+            'cpu': {},
+            'memory': {},
+            'disk': {},
+            'uptime_seconds': 0
+        }
+
+        try:
+            if PSUTIL_AVAILABLE:
+                # CPU
+                health['cpu'] = {
+                    'percent': psutil.cpu_percent(interval=None),
+                    'load_avg': psutil.getloadavg()
+                }
+
+                # Memory
+                mem = psutil.virtual_memory()
+                health['memory'] = {
+                    'total_mb': round(mem.total / (1024**2), 1),
+                    'available_mb': round(mem.available / (1024**2), 1),
+                    'percent_used': mem.percent
+                }
+
+                # Disk
+                disk = psutil.disk_usage('/')
+                health['disk'] = {
+                    'total_gb': round(disk.total / (1024**3), 1),
+                    'used_gb': round(disk.used / (1024**3), 1),
+                    'percent_used': disk.percent
+                }
+
+                # Uptime
+                health['uptime_seconds'] = int(time.time() - psutil.boot_time())
+            else:
+                self.logger.warning("psutil not available, health metrics skipped")
+
+        except Exception as e:
+            self.logger.error(f"Error gathering health metrics: {e}")
+
+        return health
+
+    def _publish_health(self):
+        """Publish system health to MQTT."""
+        if not self.mqtt_client:
+            return
+        
+        try:
+            health = self._get_system_health()
+            self.mqtt_client.publish(
+                f"{CONFIG['mqtt_topic']}/health",
+                json.dumps(health),
+                retain=False
+            )
+        except Exception as e:
+            self.logger.error(f"Failed to publish health: {e}")
+
     def stop(self):
         """Stop the IR bridge."""
         self.logger.info("Stopping IR bridge...")
