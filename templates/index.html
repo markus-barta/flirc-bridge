@@ -562,6 +562,48 @@ body::after {
 }
 .debounce-val.custom { color: var(--amber); }
 
+.action-tag {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  border-radius: 2px;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid;
+  cursor: pointer;
+}
+.action-tag.direct { color: var(--amber); border-color: var(--amber-dim); }
+.action-tag.mqtt { color: var(--blue); border-color: #3498db44; }
+.action-tag.disabled { color: var(--text-dim); border-color: var(--panel-border); }
+
+.notes-text {
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  font-style: italic;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.notes-text:hover { color: var(--text); }
+.notes-text.empty { opacity: 0.3; }
+
+.ha-results {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+  max-height: 120px;
+  overflow-y: auto;
+}
+.ha-result {
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--panel-border);
+  color: var(--text);
+}
+.ha-result .ha-name { color: var(--blue); }
+.ha-result .ha-state { color: var(--green); font-size: 0.65rem; }
+
 /* === RESPONSIVE === */
 @media (max-width: 960px) {
   .main { min-height: 100vh; }
@@ -593,7 +635,7 @@ body::after {
       </div>
       <span style="font-family:var(--mono);font-size:0.75rem;color:var(--text-dim)" id="mappingCount"></span>
     </div>
-    <div class="add-form" style="grid-template-columns: 110px 1fr 1fr auto 70px auto">
+    <div class="add-form" style="grid-template-columns: 100px 1fr 1fr auto 55px auto 1fr auto">
       <input class="edit-input" id="addScancode" placeholder="0x7001e" oninput="checkDupe()">
       <input class="edit-input" id="addCommand" placeholder="command">
       <input class="edit-input" id="addIrcc" placeholder="IRCC code">
@@ -606,7 +648,13 @@ body::after {
         <option value="color">color</option>
         <option value="channel">channel</option>
       </select>
-      <input class="edit-input" id="addDebounce" placeholder="ms" title="Per-key debounce (optional)">
+      <input class="edit-input" id="addDebounce" placeholder="ms" title="Debounce">
+      <select class="edit-select" id="addAction">
+        <option value="direct">direct</option>
+        <option value="mqtt">mqtt</option>
+        <option value="disabled">disabled</option>
+      </select>
+      <input class="edit-input" id="addNotes" placeholder="notes (optional)">
       <div class="btn-group">
         <button class="btn" id="btnLastInput" onclick="useLastInput()" title="Use last unmapped scancode" style="display:none">Last</button>
         <button class="btn btn-save" onclick="addMapping()">Add</button>
@@ -621,8 +669,10 @@ body::after {
             <th>Command</th>
             <th>IRCC Code</th>
             <th>Group</th>
-            <th style="text-align:center">Debounce</th>
-            <th style="text-align:right">Actions</th>
+            <th style="text-align:center">Db</th>
+            <th>Action</th>
+            <th>Notes</th>
+            <th style="text-align:right"></th>
           </tr>
         </thead>
         <tbody id="mappingBody"></tbody>
@@ -679,6 +729,18 @@ body::after {
             <option value="ERROR">ERROR</option>
           </select>
         </div>
+        <div class="setting-item" style="grid-column: span 2">
+          <span class="setting-label">HA URL</span>
+          <input class="setting-input" id="setHaUrl" placeholder="http://192.168.1.x:8123">
+        </div>
+        <div class="setting-item" style="grid-column: span 2">
+          <span class="setting-label">HA Token</span>
+          <input class="setting-input" id="setHaToken" type="password" placeholder="Long-lived access token">
+        </div>
+        <div style="grid-column: span 2; margin-top: 0.25rem">
+          <button class="btn" onclick="scanHA()" style="width:100%">Scan HA Automations</button>
+        </div>
+        <div class="ha-results" id="haResults" style="grid-column: span 2"></div>
       </div>
     </div>
 
@@ -714,6 +776,12 @@ function init() {
   pollStatus();
   setInterval(pollEvents, 1200);
   setInterval(pollStatus, 10000);
+
+  // Auto-save settings on change
+  ['setDebounce','setHoldThrottle','setRetryCount','setRetryDelay','setLogLevel','setHaUrl','setHaToken'].forEach(function(id) {
+    var el = document.getElementById(id);
+    el.addEventListener('change', saveSettings);
+  });
 }
 
 // ===================== MAPPINGS TABLE =====================
@@ -737,14 +805,19 @@ function renderMappings() {
     if (filter && text.toLowerCase().indexOf(filter) === -1) return '';
     shown++;
     var db = m.debounce_ms;
-    var dbText = db ? db + 'ms' : '—';
+    var dbText = db ? db : '—';
     var dbClass = db ? 'debounce-val custom editable' : 'debounce-val editable';
+    var act = m.action || 'direct';
+    var notes = m.notes || '';
+    var notesClass = notes ? 'notes-text editable' : 'notes-text empty editable';
     return '<tr id="row-' + sc.replace('0x','') + '" data-sc="' + sc + '">'
       + '<td class="scancode">' + sc + '</td>'
       + '<td><span class="command editable" onclick="editCell(this,\'' + sc + '\',\'command\')">' + m.command + '</span></td>'
       + '<td><span class="ircc editable" onclick="editCell(this,\'' + sc + '\',\'ircc\')" title="' + m.ircc + '">' + m.ircc + '</span></td>'
       + '<td><span class="editable" onclick="editGroup(this,\'' + sc + '\')"><span class="group-tag ' + m.group + '">' + m.group + '</span></span></td>'
       + '<td style="text-align:center"><span class="' + dbClass + '" onclick="editDebounce(this,\'' + sc + '\')">' + dbText + '</span></td>'
+      + '<td><span class="action-tag ' + act + '" onclick="editAction(this,\'' + sc + '\')">' + act + '</span></td>'
+      + '<td><span class="' + notesClass + '" onclick="editCell(this,\'' + sc + '\',\'notes\')" title="' + notes + '">' + (notes || '+') + '</span></td>'
       + '<td style="text-align:right"><div class="btn-group" style="justify-content:flex-end">'
       + '<button class="btn btn-test" onclick="testMapping(\'' + sc + '\')" title="Send to TV">Test</button>'
       + '<button class="btn btn-delete" onclick="confirmDelete(\'' + sc + '\')">Del</button>'
@@ -829,6 +902,20 @@ function editDebounce(el, sc) {
   });
 }
 
+function editAction(el, sc) {
+  var current = mappings[sc].action || 'direct';
+  var opts = ['direct','mqtt','disabled'].map(function(a) {
+    return '<option value="' + a + '"' + (a === current ? ' selected' : '') + '>' + a + '</option>';
+  }).join('');
+  el.outerHTML = '<select class="edit-select" onchange="saveAction(this,\'' + sc + '\')" onblur="renderMappings()">' + opts + '</select>';
+  el.parentElement.querySelector('select').focus();
+}
+
+function saveAction(sel, sc) {
+  mappings[sc].action = sel.value;
+  saveMappings(function() { renderMappings(); });
+}
+
 // ===================== SETTINGS =====================
 
 function loadSettings() {
@@ -840,6 +927,8 @@ function loadSettings() {
       document.getElementById('setRetryCount').value = s.retry_count || 3;
       document.getElementById('setRetryDelay').value = s.retry_delay || 1.0;
       document.getElementById('setLogLevel').value = s.log_level || 'INFO';
+      document.getElementById('setHaUrl').value = s.ha_url || '';
+      document.getElementById('setHaToken').value = s.ha_token || '';
     });
 }
 
@@ -850,6 +939,8 @@ function saveSettings() {
     retry_count: parseInt(document.getElementById('setRetryCount').value) || 3,
     retry_delay: parseFloat(document.getElementById('setRetryDelay').value) || 1.0,
     log_level: document.getElementById('setLogLevel').value || 'INFO',
+    ha_url: document.getElementById('setHaUrl').value.trim(),
+    ha_token: document.getElementById('setHaToken').value.trim(),
   };
   fetch('/api/settings', {
     method: 'POST',
@@ -863,6 +954,28 @@ function saveSettings() {
     .catch(function() { toast('Save failed', 'error'); });
 }
 
+function scanHA() {
+  var el = document.getElementById('haResults');
+  el.innerHTML = '<span style="color:var(--text-dim)">Scanning...</span>';
+  // Save settings first to ensure URL/token are stored
+  saveSettings();
+  setTimeout(function() {
+    fetch('/api/ha-scan', { method: 'POST' })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (!d.ok) { el.innerHTML = '<span style="color:var(--red)">' + d.error + '</span>'; return; }
+        if (!d.automations.length) { el.innerHTML = '<span style="color:var(--text-dim)">No automations found referencing ir-bridge</span>'; return; }
+        el.innerHTML = d.automations.map(function(a) {
+          var name = a.alias || a.name || a.entity_id || a.id;
+          var state = a.state ? ' <span class="ha-state">[' + a.state + ']</span>' : '';
+          return '<div class="ha-result"><span class="ha-name">' + name + '</span>' + state + '</div>';
+        }).join('');
+        toast(d.automations.length + ' automation(s) found', 'success');
+      })
+      .catch(function(e) { el.innerHTML = '<span style="color:var(--red)">Scan failed</span>'; });
+  }, 500);
+}
+
 // ===================== ADD / DUPE / LAST INPUT =====================
 
 function addMapping() {
@@ -871,11 +984,14 @@ function addMapping() {
   var ircc = document.getElementById('addIrcc').value.trim();
   var group = document.getElementById('addGroup').value;
   var db = document.getElementById('addDebounce').value.trim();
+  var action = document.getElementById('addAction').value;
+  var notes = document.getElementById('addNotes').value.trim();
 
   if (!sc || !cmd || !ircc) { toast('All fields required', 'error'); return; }
 
-  var entry = { command: cmd, ircc: ircc, group: group };
+  var entry = { command: cmd, ircc: ircc, group: group, action: action };
   if (db && parseInt(db) > 0) entry.debounce_ms = parseInt(db);
+  if (notes) entry.notes = notes;
 
   if (mappings[sc]) {
     confirm('Scancode ' + sc + ' already mapped to "' + mappings[sc].command + '". Overwrite?', function() {
@@ -894,6 +1010,7 @@ function clearAddForm() {
   document.getElementById('addCommand').value = '';
   document.getElementById('addIrcc').value = '';
   document.getElementById('addDebounce').value = '';
+  document.getElementById('addNotes').value = '';
   document.getElementById('dupeWarn').style.display = 'none';
 }
 

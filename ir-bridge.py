@@ -90,7 +90,8 @@ CONFIG = {
 def load_mappings() -> Dict[int, tuple]:
     """Load scancode→IRCC mappings from JSON file.
 
-    Returns dict of scancode -> (command, ircc, debounce_ms_or_None).
+    Returns dict of scancode -> (command, ircc, debounce_ms, action).
+    action: 'direct' (send IRCC), 'mqtt' (HA handles), 'disabled'
     """
     try:
         with open(MAPPINGS_FILE, 'r') as f:
@@ -99,7 +100,8 @@ def load_mappings() -> Dict[int, tuple]:
         for scancode_hex, entry in raw.items():
             scancode = int(scancode_hex, 16)
             debounce = entry.get('debounce_ms')
-            result[scancode] = (entry['command'], entry['ircc'], debounce)
+            action = entry.get('action', 'direct')
+            result[scancode] = (entry['command'], entry['ircc'], debounce, action)
         return result
     except Exception as e:
         logging.error(f"Failed to load mappings from {MAPPINGS_FILE}: {e}")
@@ -129,6 +131,8 @@ SETTINGS_DEFAULTS = {
     'retry_count': 3,
     'retry_delay': 1.0,
     'log_level': 'INFO',
+    'ha_url': '',
+    'ha_token': '',
 }
 
 def load_settings() -> dict:
@@ -562,10 +566,11 @@ class IRBridge:
         # Check for mapping changes
         self._reload_mappings()
 
-        # Get per-key debounce if mapped
+        # Get per-key debounce and action if mapped
         per_key_debounce = None
+        per_key_action = 'direct'
         if key_code in self.ircc_codes:
-            _, _, per_key_debounce = self.ircc_codes[key_code]
+            _, _, per_key_debounce, per_key_action = self.ircc_codes[key_code]
 
         # Throttling for held buttons
         hold_throttle = self.settings.get('hold_throttle_ms', 200)
@@ -597,20 +602,31 @@ class IRBridge:
             self._publish_raw_key(key_code, input_type, mapped=False)
             return
 
-        command_name, ircc_code, _ = self.ircc_codes[key_code]
+        command_name, ircc_code, _, action = self.ircc_codes[key_code]
+
+        if action == 'disabled':
+            self.logger.debug(f"Disabled key: {command_name} ({input_type}: {key_code})")
+            self._publish_raw_key(key_code, input_type, mapped=True, command_name=command_name)
+            return
 
         if is_hold:
             self.logger.debug(f"Key held: {command_name} ({input_type}: {key_code})")
         else:
-            self.logger.info(f"Key pressed: {command_name} ({input_type}: {key_code})")
+            self.logger.info(f"Key pressed: {command_name} [{action}] ({input_type}: {key_code})")
 
         self.stats['keys_pressed'] += 1
         self.stats['last_key'] = command_name
 
-        # Publish raw key for all presses (mapped and unmapped)
+        # Publish raw key for all presses
         self._publish_raw_key(key_code, input_type, mapped=True, command_name=command_name)
 
-        # Send to TV in background thread (never block input loop)
+        if action == 'mqtt':
+            # Don't send IRCC — HA handles this via MQTT
+            self._publish_event(command_name, key_code, command_name, True, input_type)
+            self._publish_status()
+            return
+
+        # action == 'direct': send to TV in background thread
         threading.Thread(
             target=self._send_and_report,
             args=(ircc_code, command_name, key_code, input_type),
@@ -759,7 +775,7 @@ class IRBridge:
             if 'debug_mode' in data and data['debug_mode'] != bridge.settings.get('debug_mode'):
                 bridge.set_debug_mode(bool(data['debug_mode']))
             # Apply all other settings
-            for key in ('debounce_ms', 'hold_throttle_ms', 'retry_count', 'retry_delay', 'log_level'):
+            for key in ('debounce_ms', 'hold_throttle_ms', 'retry_count', 'retry_delay', 'log_level', 'ha_url', 'ha_token'):
                 if key in data:
                     bridge.settings[key] = data[key]
             # Apply log level if changed
@@ -792,6 +808,55 @@ class IRBridge:
         @app.route('/api/status')
         def api_status():
             return jsonify(bridge.stats)
+
+        @app.route('/api/ha-scan', methods=['POST'])
+        def api_ha_scan():
+            ha_url = bridge.settings.get('ha_url', '').rstrip('/')
+            ha_token = bridge.settings.get('ha_token', '')
+            if not ha_url or not ha_token:
+                return jsonify({'ok': False, 'error': 'Set HA URL and token in settings first'}), 400
+            try:
+                r = requests.get(
+                    f"{ha_url}/api/config/automation/config",
+                    headers={'Authorization': f'Bearer {ha_token}'},
+                    timeout=10
+                )
+                if r.status_code == 404:
+                    # Try alternative: get all automations via states
+                    r = requests.get(
+                        f"{ha_url}/api/states",
+                        headers={'Authorization': f'Bearer {ha_token}'},
+                        timeout=10
+                    )
+                    if r.status_code != 200:
+                        return jsonify({'ok': False, 'error': f'HA API returned {r.status_code}'}), 502
+                    states = r.json()
+                    automations = [s for s in states if s['entity_id'].startswith('automation.')]
+                    results = []
+                    for a in automations:
+                        attrs = json.dumps(a.get('attributes', {}))
+                        if 'ir-bridge' in attrs or 'ir_bridge' in attrs:
+                            results.append({
+                                'entity_id': a['entity_id'],
+                                'name': a.get('attributes', {}).get('friendly_name', ''),
+                                'state': a.get('state', ''),
+                            })
+                    return jsonify({'ok': True, 'automations': results, 'source': 'states'})
+                if r.status_code != 200:
+                    return jsonify({'ok': False, 'error': f'HA API returned {r.status_code}'}), 502
+                configs = r.json()
+                results = []
+                for auto_id, config in configs.items():
+                    config_str = json.dumps(config)
+                    if 'ir-bridge' in config_str or 'ir_bridge' in config_str:
+                        results.append({
+                            'id': auto_id,
+                            'alias': config.get('alias', auto_id),
+                            'triggers': [t for t in config.get('trigger', []) if 'ir-bridge' in json.dumps(t)],
+                        })
+                return jsonify({'ok': True, 'automations': results, 'source': 'config'})
+            except requests.exceptions.RequestException as e:
+                return jsonify({'ok': False, 'error': str(e)}), 502
 
         def run_flask():
             app.run(host='0.0.0.0', port=CONFIG['web_port'], threaded=True)
