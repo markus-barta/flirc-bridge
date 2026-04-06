@@ -569,6 +569,10 @@ class IRBridge:
 
         # Throttling for held buttons
         hold_throttle = self.settings.get('hold_throttle_ms', 200)
+        # Per-key debounce also suppresses hold events (e.g. power must not repeat)
+        if per_key_debounce is not None:
+            hold_throttle = max(hold_throttle, per_key_debounce)
+
         if is_hold:
             if key_code in self.last_hold_time:
                 elapsed_hold = now - self.last_hold_time[key_code]
