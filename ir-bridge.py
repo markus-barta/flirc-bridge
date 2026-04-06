@@ -115,8 +115,8 @@ IRCC_CODES = {
     0xc00b6: ('previous', 'AAAAAQAAAAEAAAAYAw=='),
 
     # System (HID Keyboard: mapped via FLIRC)
-    0x7000c: ('power', 'AAAAAQAAAAEAAAAVAw=='),
-    0x7001d: ('input', 'AAAAAQAAAAEAAAAlAw=='),
+    0x7000c: ('input', 'AAAAAQAAAAEAAAAlAw=='),
+    0x7001d: ('power', 'AAAAAQAAAAEAAAAVAw=='),
     0x70004: ('options', 'AAAAAgAAAJcAAAA2Aw=='),
     0x70011: ('netflix', 'AAAAAgAAABoAAABbAw=='),
     0x70013: ('youtube', 'AAAAAgAAAMnAAABLAw=='),
