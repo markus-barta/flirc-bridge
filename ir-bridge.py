@@ -88,14 +88,18 @@ CONFIG = {
 
 
 def load_mappings() -> Dict[int, tuple]:
-    """Load scancode→IRCC mappings from JSON file."""
+    """Load scancode→IRCC mappings from JSON file.
+
+    Returns dict of scancode -> (command, ircc, debounce_ms_or_None).
+    """
     try:
         with open(MAPPINGS_FILE, 'r') as f:
             raw = json.load(f)
         result = {}
         for scancode_hex, entry in raw.items():
             scancode = int(scancode_hex, 16)
-            result[scancode] = (entry['command'], entry['ircc'])
+            debounce = entry.get('debounce_ms')
+            result[scancode] = (entry['command'], entry['ircc'], debounce)
         return result
     except Exception as e:
         logging.error(f"Failed to load mappings from {MAPPINGS_FILE}: {e}")
@@ -118,13 +122,24 @@ def save_mappings_raw(data: dict):
         f.write('\n')
 
 
+SETTINGS_DEFAULTS = {
+    'debug_mode': False,
+    'debounce_ms': 100,
+    'hold_throttle_ms': 200,
+    'retry_count': 3,
+    'retry_delay': 1.0,
+    'log_level': 'INFO',
+}
+
 def load_settings() -> dict:
-    """Load bridge settings (debug mode etc.)."""
+    """Load bridge settings, merging with defaults."""
+    settings = dict(SETTINGS_DEFAULTS)
     try:
         with open(SETTINGS_FILE, 'r') as f:
-            return json.load(f)
+            settings.update(json.load(f))
     except:
-        return {'debug_mode': False}
+        pass
+    return settings
 
 
 def save_settings(data: dict):
@@ -511,7 +526,10 @@ class IRBridge:
   </s:Body>
 </s:Envelope>'''
 
-        for attempt in range(CONFIG['retry_count']):
+        retry_count = self.settings.get('retry_count', 3)
+        retry_delay = self.settings.get('retry_delay', 1.0)
+
+        for attempt in range(retry_count):
             try:
                 response = requests.post(
                     url,
@@ -531,8 +549,8 @@ class IRBridge:
             except requests.exceptions.RequestException as e:
                 self.logger.error(f"Request failed (attempt {attempt + 1}): {e}")
 
-            if attempt < CONFIG['retry_count'] - 1:
-                time.sleep(CONFIG['retry_delay'])
+            if attempt < retry_count - 1:
+                time.sleep(retry_delay)
 
         return False
 
@@ -544,23 +562,22 @@ class IRBridge:
         # Check for mapping changes
         self._reload_mappings()
 
-        # Throttling for held buttons (don't overwhelm the TV)
+        # Get per-key debounce if mapped
+        per_key_debounce = None
+        if key_code in self.ircc_codes:
+            _, _, per_key_debounce = self.ircc_codes[key_code]
+
+        # Throttling for held buttons
+        hold_throttle = self.settings.get('hold_throttle_ms', 200)
         if is_hold:
             if key_code in self.last_hold_time:
                 elapsed_hold = now - self.last_hold_time[key_code]
-                if elapsed_hold < 200:
+                if elapsed_hold < hold_throttle:
                     return
             self.last_hold_time[key_code] = now
         else:
-            # Power button safety: Aggressive debounce (1s)
-            debounce_limit = CONFIG['debounce_ms']
-            power_scancode = None
-            for sc, (cmd, _) in self.ircc_codes.items():
-                if cmd == 'power':
-                    power_scancode = sc
-                    break
-            if key_code == power_scancode:
-                debounce_limit = max(debounce_limit, 1000)
+            # Per-key debounce overrides global
+            debounce_limit = per_key_debounce if per_key_debounce is not None else self.settings.get('debounce_ms', 100)
 
             if key_code in self.last_key_time:
                 elapsed = now - self.last_key_time[key_code]
@@ -576,7 +593,7 @@ class IRBridge:
             self._publish_raw_key(key_code, input_type, mapped=False)
             return
 
-        command_name, ircc_code = self.ircc_codes[key_code]
+        command_name, ircc_code, _ = self.ircc_codes[key_code]
 
         if is_hold:
             self.logger.debug(f"Key held: {command_name} ({input_type}: {key_code})")
@@ -725,8 +742,17 @@ class IRBridge:
             if request.method == 'GET':
                 return jsonify(bridge.settings)
             data = request.get_json()
-            if 'debug_mode' in data:
+            # Handle debug mode separately (needs MQTT teardown/setup)
+            if 'debug_mode' in data and data['debug_mode'] != bridge.settings.get('debug_mode'):
                 bridge.set_debug_mode(bool(data['debug_mode']))
+            # Apply all other settings
+            for key in ('debounce_ms', 'hold_throttle_ms', 'retry_count', 'retry_delay', 'log_level'):
+                if key in data:
+                    bridge.settings[key] = data[key]
+            # Apply log level if changed
+            if 'log_level' in data:
+                bridge.logger.setLevel(getattr(logging, str(data['log_level']).upper(), logging.INFO))
+            save_settings(bridge.settings)
             return jsonify({'ok': True, 'mqtt_topic': bridge.mqtt_topic})
 
         @app.route('/api/events', methods=['GET', 'DELETE'])

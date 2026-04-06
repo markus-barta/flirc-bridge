@@ -20,7 +20,7 @@
 
   "0xc00e9": { "command": "volumeup", "ircc": "AAAAAQAAAAEAAAASAw==", "group": "volume" },
   "0xc00ea": { "command": "volumedown", "ircc": "AAAAAQAAAAEAAAATAw==", "group": "volume" },
-  "0xc00e2": { "command": "mute", "ircc": "AAAAAQAAAAEAAAAUAw==", "group": "volume" },
+  "0xc00e2": { "command": "mute", "ircc": "AAAAAQAAAAEAAAAUAw==", "group": "volume", "debounce_ms": 500 },
 
   "0xc00cd": { "command": "play", "ircc": "AAAAAQAAAAEAAAANAw==", "group": "media" },
   "0xc00b7": { "command": "stop", "ircc": "AAAAAQAAAAEAAAAOAw==", "group": "media" },
@@ -30,7 +30,7 @@
   "0xc00b6": { "command": "previous", "ircc": "AAAAAQAAAAEAAAAYAw==", "group": "media" },
 
   "0x7000c": { "command": "input", "ircc": "AAAAAQAAAAEAAAAlAw==", "group": "system" },
-  "0x7001d": { "command": "power", "ircc": "AAAAAQAAAAEAAAAVAw==", "group": "system" },
+  "0x7001d": { "command": "power", "ircc": "AAAAAQAAAAEAAAAVAw==", "group": "system", "debounce_ms": 1000 },
   "0x70004": { "command": "options", "ircc": "AAAAAgAAAJcAAAA2Aw==", "group": "system" },
   "0x70011": { "command": "netflix", "ircc": "AAAAAgAAABoAAABbAw==", "group": "system" },
   "0x70013": { "command": "youtube", "ircc": "AAAAAgAAAMnAAABLAw==", "group": "system" },
