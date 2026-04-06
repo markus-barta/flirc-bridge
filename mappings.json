@@ -1,0 +1,45 @@
+{
+  "0x7001e": { "command": "num1", "ircc": "AAAAAQAAAAEAAAAAAw==", "group": "numbers" },
+  "0x7001f": { "command": "num2", "ircc": "AAAAAQAAAAEAAAABAw==", "group": "numbers" },
+  "0x70020": { "command": "num3", "ircc": "AAAAAQAAAAEAAAACAw==", "group": "numbers" },
+  "0x70021": { "command": "num4", "ircc": "AAAAAQAAAAEAAAADAw==", "group": "numbers" },
+  "0x70022": { "command": "num5", "ircc": "AAAAAQAAAAEAAAAEAw==", "group": "numbers" },
+  "0x70023": { "command": "num6", "ircc": "AAAAAQAAAAEAAAAFAw==", "group": "numbers" },
+  "0x70024": { "command": "num7", "ircc": "AAAAAQAAAAEAAAAGAw==", "group": "numbers" },
+  "0x70025": { "command": "num8", "ircc": "AAAAAQAAAAEAAAAHAw==", "group": "numbers" },
+  "0x70026": { "command": "num9", "ircc": "AAAAAQAAAAEAAAAIAw==", "group": "numbers" },
+  "0x70027": { "command": "num0", "ircc": "AAAAAQAAAAEAAAAJAw==", "group": "numbers" },
+
+  "0x70052": { "command": "up", "ircc": "AAAAAQAAAAEAAAB0Aw==", "group": "navigation" },
+  "0x70051": { "command": "down", "ircc": "AAAAAQAAAAEAAAB1Aw==", "group": "navigation" },
+  "0x70050": { "command": "left", "ircc": "AAAAAQAAAAEAAAA0Aw==", "group": "navigation" },
+  "0x7004f": { "command": "right", "ircc": "AAAAAQAAAAEAAAAzAw==", "group": "navigation" },
+  "0x70058": { "command": "enter", "ircc": "AAAAAQAAAAEAAABlAw==", "group": "navigation" },
+  "0x70029": { "command": "exit", "ircc": "AAAAAQAAAAEAAABjAw==", "group": "navigation" },
+  "0x7004a": { "command": "home", "ircc": "AAAAAQAAAAEAAABgAw==", "group": "navigation" },
+
+  "0xc00e9": { "command": "volumeup", "ircc": "AAAAAQAAAAEAAAASAw==", "group": "volume" },
+  "0xc00ea": { "command": "volumedown", "ircc": "AAAAAQAAAAEAAAATAw==", "group": "volume" },
+  "0xc00e2": { "command": "mute", "ircc": "AAAAAQAAAAEAAAAUAw==", "group": "volume" },
+
+  "0xc00cd": { "command": "play", "ircc": "AAAAAQAAAAEAAAANAw==", "group": "media" },
+  "0xc00b7": { "command": "stop", "ircc": "AAAAAQAAAAEAAAAOAw==", "group": "media" },
+  "0xc00b4": { "command": "rewind", "ircc": "AAAAAQAAAAEAAAA4Aw==", "group": "media" },
+  "0xc00b3": { "command": "fastforward", "ircc": "AAAAAQAAAAEAAAA5Aw==", "group": "media" },
+  "0xc00b5": { "command": "next", "ircc": "AAAAAQAAAAEAAAAXAw==", "group": "media" },
+  "0xc00b6": { "command": "previous", "ircc": "AAAAAQAAAAEAAAAYAw==", "group": "media" },
+
+  "0x7000c": { "command": "input", "ircc": "AAAAAQAAAAEAAAAlAw==", "group": "system" },
+  "0x7001d": { "command": "power", "ircc": "AAAAAQAAAAEAAAAVAw==", "group": "system" },
+  "0x70004": { "command": "options", "ircc": "AAAAAgAAAJcAAAA2Aw==", "group": "system" },
+  "0x70011": { "command": "netflix", "ircc": "AAAAAgAAABoAAABbAw==", "group": "system" },
+  "0x70013": { "command": "youtube", "ircc": "AAAAAgAAAMnAAABLAw==", "group": "system" },
+
+  "0x70015": { "command": "red", "ircc": "AAAAAgAAAJcAAAAlAw==", "group": "color" },
+  "0x7000a": { "command": "green", "ircc": "AAAAAgAAAJcAAAAmAw==", "group": "color" },
+  "0x7001c": { "command": "yellow", "ircc": "AAAAAgAAAJcAAAAnAw==", "group": "color" },
+  "0x70005": { "command": "blue", "ircc": "AAAAAgAAAJcAAAAoAw==", "group": "color" },
+
+  "0x7004b": { "command": "channelup", "ircc": "AAAAAQAAAAEAAAA+Aw==", "group": "channel" },
+  "0x7004e": { "command": "channeldown", "ircc": "AAAAAQAAAAEAAAA9Aw==", "group": "channel" }
+}
