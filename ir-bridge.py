@@ -702,6 +702,16 @@ class IRBridge:
                 events = [e for e in events if e['timestamp'] > last_ts]
             return jsonify(events)
 
+        @app.route('/api/test', methods=['POST'])
+        def api_test():
+            data = request.get_json()
+            ircc = data.get('ircc', '')
+            command = data.get('command', 'test')
+            if not ircc:
+                return jsonify({'ok': False, 'error': 'No IRCC code'}), 400
+            success = bridge._send_ircc_command(ircc, command)
+            return jsonify({'ok': success, 'command': command})
+
         @app.route('/api/status')
         def api_status():
             return jsonify(bridge.stats)

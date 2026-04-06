@@ -19,13 +19,15 @@
   --green-dim: #1a7a26;
   --red: #e74c3c;
   --red-dim: #8b2e23;
+  --blue: #3498db;
   --text: #c8c0b0;
   --text-dim: #6b6560;
+  --highlight: #e8a81712;
   --mono: 'Courier New', 'Courier', monospace;
   --sans: 'Segoe UI', 'Helvetica Neue', sans-serif;
 }
 
-html { font-size: 14px; }
+html { font-size: 18px; }
 
 body {
   background: var(--bg);
@@ -35,18 +37,11 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* === SCAN LINE OVERLAY === */
 body::after {
   content: '';
   position: fixed;
   inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0,0,0,0.08) 2px,
-    rgba(0,0,0,0.08) 4px
-  );
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.06) 3px, rgba(0,0,0,0.06) 6px);
   pointer-events: none;
   z-index: 9999;
 }
@@ -63,15 +58,9 @@ body::after {
   flex-wrap: wrap;
 }
 
-.header-title {
-  display: flex;
-  align-items: baseline;
-  gap: 0.75rem;
-}
-
 .header h1 {
   font-family: var(--mono);
-  font-size: 1.25rem;
+  font-size: 1.3rem;
   color: var(--amber);
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -83,9 +72,9 @@ body::after {
   font-family: var(--mono);
   font-size: 0.75rem;
   color: var(--text-dim);
+  margin-left: 0.75rem;
 }
 
-/* === STATUS STRIP === */
 .status-strip {
   display: flex;
   gap: 1.5rem;
@@ -97,34 +86,22 @@ body::after {
   align-items: center;
   gap: 0.4rem;
   font-family: var(--mono);
-  font-size: 0.75rem;
+  font-size: 0.8rem;
 }
 
-.stat-label {
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
+.stat-label { color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-value { color: var(--amber); font-weight: 700; }
 
-.stat-value {
-  color: var(--amber);
-  font-weight: 700;
-}
-
-/* === MAIN LAYOUT === */
+/* === LAYOUT === */
 .main {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: 1fr 380px;
   gap: 1px;
   background: var(--panel-border);
-  min-height: calc(100vh - 60px);
+  min-height: calc(100vh - 65px);
 }
+@media (max-width: 960px) { .main { grid-template-columns: 1fr; } }
 
-@media (max-width: 900px) {
-  .main { grid-template-columns: 1fr; }
-}
-
-/* === PANEL === */
 .panel {
   background: var(--panel);
   padding: 1.25rem;
@@ -137,135 +114,99 @@ body::after {
   margin-bottom: 1rem;
   padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--panel-border);
+  gap: 0.75rem;
 }
 
 .panel-title {
   font-family: var(--mono);
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: var(--amber);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  white-space: nowrap;
 }
 
 .panel-title::before {
   content: '';
   display: inline-block;
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   background: var(--amber);
   box-shadow: 0 0 6px var(--amber-glow);
 }
 
-/* === DEBUG MODE TOGGLE === */
-.debug-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+/* === SEARCH === */
+.search-bar {
+  flex: 1;
+  max-width: 280px;
 }
 
-.debug-label {
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  transition: color 0.3s;
-}
-
-.debug-label.prod { color: var(--green); }
-.debug-label.debug { color: var(--red); }
-
-.toggle-track {
-  position: relative;
-  width: 52px;
-  height: 26px;
+.search-input {
+  width: 100%;
   background: var(--panel-inset);
-  border: 2px solid var(--green-dim);
-  border-radius: 3px;
-  cursor: pointer;
-  transition: border-color 0.3s;
-}
-
-.toggle-track.active {
-  border-color: var(--red-dim);
-}
-
-.toggle-thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 18px;
-  height: 18px;
-  background: var(--green);
-  border-radius: 2px;
-  transition: all 0.2s;
-  box-shadow: 0 0 8px rgba(46,204,64,0.4);
-}
-
-.toggle-track.active .toggle-thumb {
-  left: 28px;
-  background: var(--red);
-  box-shadow: 0 0 8px rgba(231,76,60,0.4);
-}
-
-.mqtt-topic {
+  border: 1px solid var(--panel-border);
+  color: var(--text);
   font-family: var(--mono);
-  font-size: 0.65rem;
-  color: var(--text-dim);
-  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 3px;
 }
 
-/* === MAPPING TABLE === */
+.search-input:focus { outline: none; border-color: var(--amber-dim); }
+.search-input::placeholder { color: var(--text-dim); }
+
+/* === TABLE === */
+.table-scroll {
+  overflow-y: auto;
+  max-height: calc(100vh - 260px);
+}
+
 .mapping-table {
   width: 100%;
   border-collapse: collapse;
   font-family: var(--mono);
-  font-size: 0.8rem;
+  font-size: 0.9rem;
 }
 
-.mapping-table thead {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
+.mapping-table thead { position: sticky; top: 0; z-index: 10; }
 
 .mapping-table th {
   background: var(--panel-inset);
   color: var(--text-dim);
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  padding: 0.5rem 0.6rem;
+  padding: 0.6rem 0.7rem;
   text-align: left;
   border-bottom: 1px solid var(--panel-border);
   font-weight: 600;
 }
 
 .mapping-table td {
-  padding: 0.4rem 0.6rem;
+  padding: 0.45rem 0.7rem;
   border-bottom: 1px solid var(--panel-border);
   vertical-align: middle;
 }
 
-.mapping-table tr:hover td {
-  background: #1f1f1f;
+.mapping-table tr { transition: background 0.3s; }
+.mapping-table tr:hover td { background: #1f1f1f; }
+
+/* Row highlight on key press */
+.mapping-table tr.active-pulse td {
+  background: var(--amber-glow) !important;
+  transition: background 0s;
 }
 
-.mapping-table .scancode {
-  color: var(--amber);
-  font-weight: 700;
-}
-
-.mapping-table .command {
-  color: var(--text);
-}
+.mapping-table .scancode { color: var(--amber); font-weight: 700; }
+.mapping-table .command { color: var(--text); }
 
 .mapping-table .ircc {
   color: var(--text-dim);
-  font-size: 0.7rem;
-  max-width: 120px;
+  font-size: 0.75rem;
+  max-width: 140px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -273,9 +214,9 @@ body::after {
 
 .group-tag {
   display: inline-block;
-  padding: 0.1rem 0.4rem;
+  padding: 0.15rem 0.5rem;
   border-radius: 2px;
-  font-size: 0.6rem;
+  font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border: 1px solid;
@@ -289,10 +230,40 @@ body::after {
 .group-tag.color { color: #1abc9c; border-color: #1abc9c33; }
 .group-tag.channel { color: #e67e22; border-color: #e67e2233; }
 
+/* === EDITABLE CELLS === */
+.editable {
+  cursor: pointer;
+  border-bottom: 1px dashed var(--panel-border);
+  padding-bottom: 1px;
+}
+.editable:hover { border-bottom-color: var(--amber-dim); }
+
+.edit-input {
+  background: var(--panel-inset);
+  border: 1px solid var(--amber-dim);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  padding: 0.3rem 0.5rem;
+  width: 100%;
+}
+.edit-input:focus { outline: none; border-color: var(--amber); }
+.edit-input::placeholder { color: var(--text-dim); }
+
+.edit-select {
+  background: var(--panel-inset);
+  border: 1px solid var(--amber-dim);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  padding: 0.25rem;
+}
+
+/* === BUTTONS === */
 .btn {
   font-family: var(--mono);
-  font-size: 0.7rem;
-  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+  padding: 0.35rem 0.65rem;
   border: 1px solid var(--panel-border);
   background: var(--panel-inset);
   color: var(--text-dim);
@@ -300,76 +271,100 @@ body::after {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   transition: all 0.15s;
+  white-space: nowrap;
 }
+.btn:hover { border-color: var(--amber-dim); color: var(--amber); }
 
-.btn:hover {
-  border-color: var(--amber-dim);
-  color: var(--amber);
-}
+.btn-delete { color: var(--red-dim); }
+.btn-delete:hover { border-color: var(--red-dim); color: var(--red); }
 
-.btn-delete:hover {
-  border-color: var(--red-dim);
-  color: var(--red);
-}
+.btn-save { border-color: var(--green-dim); color: var(--green-dim); }
+.btn-save:hover { border-color: var(--green); color: var(--green); }
 
-.btn-save {
-  border-color: var(--green-dim);
-  color: var(--green-dim);
-}
+.btn-test { border-color: var(--blue); color: var(--blue); opacity: 0.6; }
+.btn-test:hover { opacity: 1; }
 
-.btn-save:hover {
-  border-color: var(--green);
-  color: var(--green);
-}
+.btn-adopt { border-color: var(--green-dim); color: var(--green); font-size: 0.85rem; padding: 0.2rem 0.5rem; }
+.btn-adopt:hover { background: var(--green-dim); color: #fff; }
 
-.table-scroll {
-  overflow-y: auto;
-  max-height: calc(100vh - 250px);
-}
+.btn-group { display: flex; gap: 0.35rem; }
 
-/* === EDIT ROW === */
-.edit-input {
-  background: var(--panel-inset);
-  border: 1px solid var(--panel-border);
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 0.75rem;
-  padding: 0.25rem 0.4rem;
-  width: 100%;
-}
-
-.edit-input:focus {
-  outline: none;
-  border-color: var(--amber-dim);
-}
-
-.edit-input::placeholder {
-  color: var(--text-dim);
-}
-
+/* === ADD ROW === */
 .add-row td {
-  padding: 0.5rem 0.6rem;
+  padding: 0.6rem 0.7rem;
   border-top: 2px solid var(--amber-dim);
+  background: var(--panel-inset);
+}
+
+.add-row .edit-input { border-color: var(--panel-border); }
+.add-row .edit-input:focus { border-color: var(--amber-dim); }
+
+/* === DEBUG TOGGLE === */
+.debug-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.debug-label {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: opacity 0.3s;
+}
+
+.toggle-track {
+  position: relative;
+  width: 56px;
+  height: 28px;
+  background: var(--panel-inset);
+  border: 2px solid var(--green-dim);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: border-color 0.3s;
+}
+.toggle-track.active { border-color: var(--red-dim); }
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 20px; height: 20px;
+  background: var(--green);
+  border-radius: 2px;
+  transition: all 0.2s;
+  box-shadow: 0 0 8px rgba(46,204,64,0.4);
+}
+.toggle-track.active .toggle-thumb {
+  left: 30px;
+  background: var(--red);
+  box-shadow: 0 0 8px rgba(231,76,60,0.4);
+}
+
+.mqtt-topic {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin-top: 0.35rem;
 }
 
 /* === LIVE FEED === */
 .feed {
   display: flex;
   flex-direction: column;
-  gap: 0;
   overflow-y: auto;
-  max-height: calc(100vh - 200px);
+  max-height: calc(100vh - 260px);
 }
 
 .feed-item {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 0.5rem;
+  grid-template-columns: 1fr auto;
+  gap: 0.4rem;
   align-items: center;
-  padding: 0.5rem 0;
+  padding: 0.55rem 0;
   border-bottom: 1px solid var(--panel-border);
   font-family: var(--mono);
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   animation: feed-in 0.3s ease-out;
 }
 
@@ -378,50 +373,56 @@ body::after {
   to { opacity: 1; transform: translateY(0); }
 }
 
+.feed-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.feed-right {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
 .feed-time {
   color: var(--text-dim);
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   white-space: nowrap;
 }
 
-.feed-code {
-  color: var(--amber);
-  font-weight: 700;
-}
+.feed-code { color: var(--amber); font-weight: 700; }
 
 .feed-command {
   color: var(--text);
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-
+.feed-command:hover { color: var(--amber); text-decoration: underline; }
 .feed-command.unmapped {
   color: var(--text-dim);
   font-style: italic;
+  cursor: default;
 }
+.feed-command.unmapped:hover { color: var(--text-dim); text-decoration: none; }
 
 .feed-dot {
-  width: 8px;
-  height: 8px;
+  width: 10px; height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
 }
-
-.feed-dot.mapped {
-  background: var(--green);
-  box-shadow: 0 0 6px rgba(46,204,64,0.5);
-}
-
-.feed-dot.unmapped {
-  background: var(--red);
-  box-shadow: 0 0 6px rgba(231,76,60,0.5);
-}
+.feed-dot.mapped { background: var(--green); box-shadow: 0 0 6px rgba(46,204,64,0.5); }
+.feed-dot.unmapped { background: var(--red); box-shadow: 0 0 6px rgba(231,76,60,0.5); }
 
 .feed-empty {
   color: var(--text-dim);
   font-family: var(--mono);
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   text-align: center;
   padding: 2rem;
-  opacity: 0.5;
 }
 
 /* === SIDEBAR === */
@@ -431,17 +432,15 @@ body::after {
   gap: 1px;
   background: var(--panel-border);
 }
-
 .sidebar .panel { flex: 1; }
 
 /* === TOAST === */
 .toast {
   position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
+  bottom: 1.5rem; right: 1.5rem;
   font-family: var(--mono);
-  font-size: 0.75rem;
-  padding: 0.6rem 1rem;
+  font-size: 0.85rem;
+  padding: 0.7rem 1.2rem;
   background: var(--panel);
   border: 1px solid var(--amber-dim);
   color: var(--amber);
@@ -450,65 +449,78 @@ body::after {
   transition: all 0.3s;
   z-index: 100;
 }
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.error { border-color: var(--red-dim); color: var(--red); }
+.toast.success { border-color: var(--green-dim); color: var(--green); }
 
-.toast.show {
-  opacity: 1;
-  transform: translateY(0);
+/* === CONFIRM DIALOG === */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+.confirm-box {
+  background: var(--panel);
+  border: 2px solid var(--amber-dim);
+  padding: 1.5rem;
+  min-width: 320px;
+  font-family: var(--mono);
+}
+.confirm-box p {
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+  color: var(--text);
+}
+.confirm-box .btn-group {
+  justify-content: flex-end;
 }
 
-.toast.error {
-  border-color: var(--red-dim);
+/* === DUPE WARNING === */
+.dupe-warn {
   color: var(--red);
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  padding: 0.3rem 0;
 }
 
 /* === RESPONSIVE === */
-@media (max-width: 900px) {
+@media (max-width: 960px) {
   .main { min-height: auto; }
-  .table-scroll { max-height: 60vh; }
+  .table-scroll { max-height: 55vh; }
   .feed { max-height: 40vh; }
-  .header { padding: 0.75rem 1rem; }
-  .status-strip { gap: 0.75rem; }
 }
 </style>
 </head>
 <body>
 
 <header class="header">
-  <div class="header-title">
+  <div style="display:flex;align-items:baseline">
     <h1>IR Bridge</h1>
     <span class="ver">v{{ version }} // hsb2</span>
   </div>
   <div class="status-strip" id="statusStrip">
-    <div class="stat">
-      <span class="stat-label">Keys</span>
-      <span class="stat-value" id="statKeys">--</span>
-    </div>
-    <div class="stat">
-      <span class="stat-label">Sent</span>
-      <span class="stat-value" id="statSent">--</span>
-    </div>
-    <div class="stat">
-      <span class="stat-label">Errors</span>
-      <span class="stat-value" id="statErrors">--</span>
-    </div>
-    <div class="stat">
-      <span class="stat-label">Uptime</span>
-      <span class="stat-value" id="statUptime">--</span>
-    </div>
+    <div class="stat"><span class="stat-label">Keys</span><span class="stat-value" id="statKeys">--</span></div>
+    <div class="stat"><span class="stat-label">Sent</span><span class="stat-value" id="statSent">--</span></div>
+    <div class="stat"><span class="stat-label">Errors</span><span class="stat-value" id="statErrors">--</span></div>
+    <div class="stat"><span class="stat-label">Uptime</span><span class="stat-value" id="statUptime">--</span></div>
   </div>
 </header>
 
 <div class="main">
 
-  <!-- LEFT: MAPPING TABLE -->
   <div class="panel">
     <div class="panel-header">
-      <div class="panel-title">Scancode Mappings</div>
-      <div style="display:flex;gap:0.5rem">
-        <span style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim)" id="mappingCount"></span>
+      <div class="panel-title">Mappings</div>
+      <div class="search-bar">
+        <input class="search-input" id="searchInput" placeholder="Filter..." oninput="renderMappings()">
       </div>
+      <span style="font-family:var(--mono);font-size:0.75rem;color:var(--text-dim)" id="mappingCount"></span>
     </div>
-    <div class="table-scroll">
+    <div class="table-scroll" id="tableScroll">
       <table class="mapping-table">
         <thead>
           <tr>
@@ -516,17 +528,17 @@ body::after {
             <th>Command</th>
             <th>IRCC Code</th>
             <th>Group</th>
-            <th></th>
+            <th style="text-align:right">Actions</th>
           </tr>
         </thead>
         <tbody id="mappingBody"></tbody>
         <tfoot>
           <tr class="add-row">
-            <td><input class="edit-input" id="addScancode" placeholder="0x7001e"></td>
+            <td><input class="edit-input" id="addScancode" placeholder="0x7001e" oninput="checkDupe()"></td>
             <td><input class="edit-input" id="addCommand" placeholder="command"></td>
             <td><input class="edit-input" id="addIrcc" placeholder="AAAA...Aw=="></td>
             <td>
-              <select class="edit-input" id="addGroup">
+              <select class="edit-select" id="addGroup">
                 <option value="numbers">numbers</option>
                 <option value="navigation">navigation</option>
                 <option value="volume">volume</option>
@@ -536,32 +548,36 @@ body::after {
                 <option value="channel">channel</option>
               </select>
             </td>
-            <td><button class="btn btn-save" onclick="addMapping()">Add</button></td>
+            <td style="text-align:right">
+              <div class="btn-group" style="justify-content:flex-end">
+                <button class="btn" id="btnLastInput" onclick="useLastInput()" title="Use last unmapped scancode" style="display:none">Last</button>
+                <button class="btn btn-save" onclick="addMapping()">Add</button>
+              </div>
+            </td>
+          </tr>
+          <tr class="add-row" id="dupeRow" style="display:none">
+            <td colspan="5"><span class="dupe-warn" id="dupeWarn"></span></td>
           </tr>
         </tfoot>
       </table>
     </div>
   </div>
 
-  <!-- RIGHT SIDEBAR -->
   <div class="sidebar">
-
-    <!-- DEBUG MODE -->
     <div class="panel">
       <div class="panel-header">
         <div class="panel-title">MQTT Mode</div>
       </div>
       <div class="debug-toggle">
-        <span class="debug-label prod" id="labelProd">PROD</span>
+        <span class="debug-label" id="labelProd" style="color:var(--green)">PROD</span>
         <div class="toggle-track" id="debugToggle" onclick="toggleDebug()">
           <div class="toggle-thumb"></div>
         </div>
-        <span class="debug-label debug" id="labelDebug">DEBUG</span>
+        <span class="debug-label" id="labelDebug" style="color:var(--red);opacity:0.3">DEBUG</span>
       </div>
       <div class="mqtt-topic" id="mqttTopic">{{ mqtt_topic }}</div>
     </div>
 
-    <!-- LIVE FEED -->
     <div class="panel" style="flex:3">
       <div class="panel-header">
         <div class="panel-title">Live Events</div>
@@ -571,88 +587,241 @@ body::after {
         <div class="feed-empty">Waiting for key events...</div>
       </div>
     </div>
-
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
+<div id="confirmContainer"></div>
 
 <script>
 var mappings = {{ mappings_json|safe }};
 var debugMode = {{ debug_mode|safe }};
 var feedItems = [];
+var lastUnmappedScancode = null;
+var lastPollTs = '';
 var MAX_FEED = 50;
+var GROUPS = ['numbers','navigation','volume','media','system','color','channel'];
 
-// --- Init ---
 function init() {
   renderMappings();
   updateDebugUI();
   pollEvents();
   pollStatus();
-  setInterval(pollEvents, 1500);
+  setInterval(pollEvents, 1200);
   setInterval(pollStatus, 10000);
 }
 
-// --- Mappings ---
+// ===================== MAPPINGS TABLE =====================
+
 function renderMappings() {
   var body = document.getElementById('mappingBody');
+  var filter = document.getElementById('searchInput').value.toLowerCase();
   var keys = Object.keys(mappings);
-  var groups = ['numbers','navigation','volume','media','system','color','channel'];
+
   keys.sort(function(a,b) {
-    var ga = groups.indexOf(mappings[a].group);
-    var gb = groups.indexOf(mappings[b].group);
+    var ga = GROUPS.indexOf(mappings[a].group);
+    var gb = GROUPS.indexOf(mappings[b].group);
     if (ga !== gb) return ga - gb;
-    return a.localeCompare(b);
+    return mappings[a].command.localeCompare(mappings[b].command);
   });
 
+  var shown = 0;
   body.innerHTML = keys.map(function(sc) {
     var m = mappings[sc];
-    return '<tr data-sc="'+sc+'">'
-      + '<td class="scancode">'+sc+'</td>'
-      + '<td class="command">'+m.command+'</td>'
-      + '<td class="ircc" title="'+m.ircc+'">'+m.ircc+'</td>'
-      + '<td><span class="group-tag '+m.group+'">'+m.group+'</span></td>'
-      + '<td><button class="btn btn-delete" onclick="deleteMapping(\''+sc+'\')">Del</button></td>'
+    var text = sc + ' ' + m.command + ' ' + m.group;
+    if (filter && text.toLowerCase().indexOf(filter) === -1) return '';
+    shown++;
+    return '<tr id="row-' + sc.replace('0x','') + '" data-sc="' + sc + '">'
+      + '<td class="scancode">' + sc + '</td>'
+      + '<td><span class="command editable" onclick="editCell(this,\'' + sc + '\',\'command\')">' + m.command + '</span></td>'
+      + '<td><span class="ircc editable" onclick="editCell(this,\'' + sc + '\',\'ircc\')" title="' + m.ircc + '">' + m.ircc + '</span></td>'
+      + '<td><span class="editable" onclick="editGroup(this,\'' + sc + '\')"><span class="group-tag ' + m.group + '">' + m.group + '</span></span></td>'
+      + '<td style="text-align:right"><div class="btn-group" style="justify-content:flex-end">'
+      + '<button class="btn btn-test" onclick="testMapping(\'' + sc + '\')" title="Send to TV">Test</button>'
+      + '<button class="btn btn-delete" onclick="confirmDelete(\'' + sc + '\')">Del</button>'
+      + '</div></td>'
       + '</tr>';
   }).join('');
 
-  document.getElementById('mappingCount').textContent = keys.length + ' mapped';
+  document.getElementById('mappingCount').textContent = shown + '/' + keys.length;
 }
 
+// ===================== INLINE EDIT =====================
+
+function editCell(el, sc, field) {
+  if (el.querySelector('input')) return;
+  var current = mappings[sc][field];
+  var w = el.offsetWidth;
+  el.innerHTML = '<input class="edit-input" value="' + current + '" style="width:' + Math.max(w, 80) + 'px">';
+  var inp = el.querySelector('input');
+  inp.focus();
+  inp.select();
+
+  function save() {
+    var val = inp.value.trim();
+    if (val && val !== current) {
+      mappings[sc][field] = val;
+      saveMappings(function() { renderMappings(); });
+    } else {
+      renderMappings();
+    }
+  }
+  inp.addEventListener('blur', save);
+  inp.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') save();
+    if (e.key === 'Escape') renderMappings();
+  });
+}
+
+function editGroup(el, sc) {
+  if (el.querySelector('select')) return;
+  var current = mappings[sc].group;
+  var opts = GROUPS.map(function(g) {
+    return '<option value="' + g + '"' + (g === current ? ' selected' : '') + '>' + g + '</option>';
+  }).join('');
+  el.innerHTML = '<select class="edit-select">' + opts + '</select>';
+  var sel = el.querySelector('select');
+  sel.focus();
+
+  function save() {
+    var val = sel.value;
+    if (val !== current) {
+      mappings[sc].group = val;
+      saveMappings(function() { renderMappings(); });
+    } else {
+      renderMappings();
+    }
+  }
+  sel.addEventListener('change', save);
+  sel.addEventListener('blur', save);
+}
+
+// ===================== ADD / DUPE / LAST INPUT =====================
+
 function addMapping() {
-  var sc = document.getElementById('addScancode').value.trim();
+  var sc = document.getElementById('addScancode').value.trim().toLowerCase();
   var cmd = document.getElementById('addCommand').value.trim();
   var ircc = document.getElementById('addIrcc').value.trim();
   var group = document.getElementById('addGroup').value;
 
-  if (!sc || !cmd || !ircc) { toast('All fields required', true); return; }
+  if (!sc || !cmd || !ircc) { toast('All fields required', 'error'); return; }
+
+  if (mappings[sc]) {
+    confirm('Scancode ' + sc + ' already mapped to "' + mappings[sc].command + '". Overwrite?', function() {
+      mappings[sc] = { command: cmd, ircc: ircc, group: group };
+      saveMappings(function() { clearAddForm(); renderMappings(); });
+    });
+    return;
+  }
 
   mappings[sc] = { command: cmd, ircc: ircc, group: group };
-  saveMappings();
+  saveMappings(function() { clearAddForm(); renderMappings(); });
+}
+
+function clearAddForm() {
   document.getElementById('addScancode').value = '';
   document.getElementById('addCommand').value = '';
   document.getElementById('addIrcc').value = '';
+  document.getElementById('dupeRow').style.display = 'none';
 }
 
-function deleteMapping(sc) {
-  delete mappings[sc];
-  saveMappings();
+function checkDupe() {
+  var sc = document.getElementById('addScancode').value.trim().toLowerCase();
+  var row = document.getElementById('dupeRow');
+  var warn = document.getElementById('dupeWarn');
+  if (sc && mappings[sc]) {
+    warn.textContent = 'Duplicate: ' + sc + ' → "' + mappings[sc].command + '" (will overwrite on add)';
+    row.style.display = '';
+  } else {
+    row.style.display = 'none';
+  }
 }
 
-function saveMappings() {
+function useLastInput() {
+  if (lastUnmappedScancode) {
+    document.getElementById('addScancode').value = lastUnmappedScancode;
+    checkDupe();
+    document.getElementById('addCommand').focus();
+  }
+}
+
+function updateLastButton() {
+  var btn = document.getElementById('btnLastInput');
+  if (lastUnmappedScancode) {
+    btn.style.display = '';
+    btn.title = 'Use ' + lastUnmappedScancode;
+  }
+}
+
+// ===================== ADOPT FROM FEED =====================
+
+function adoptFromFeed(scancode) {
+  document.getElementById('addScancode').value = scancode;
+  checkDupe();
+  document.getElementById('addCommand').focus();
+  // Scroll to add row
+  var table = document.querySelector('.table-scroll');
+  table.scrollTop = table.scrollHeight;
+}
+
+// ===================== DELETE CONFIRM =====================
+
+function confirmDelete(sc) {
+  var cmd = mappings[sc] ? mappings[sc].command : sc;
+  confirm('Delete mapping "' + cmd + '" (' + sc + ')?', function() {
+    delete mappings[sc];
+    saveMappings(function() { renderMappings(); });
+  });
+}
+
+function confirm(msg, onYes) {
+  var c = document.getElementById('confirmContainer');
+  c.innerHTML = '<div class="confirm-overlay" onclick="closeConfirm()">'
+    + '<div class="confirm-box" onclick="event.stopPropagation()">'
+    + '<p>' + msg + '</p>'
+    + '<div class="btn-group"><button class="btn" onclick="closeConfirm()">Cancel</button>'
+    + '<button class="btn btn-delete" id="confirmYes">Delete</button></div>'
+    + '</div></div>';
+  document.getElementById('confirmYes').onclick = function() { closeConfirm(); onYes(); };
+}
+
+function closeConfirm() {
+  document.getElementById('confirmContainer').innerHTML = '';
+}
+
+// ===================== TEST =====================
+
+function testMapping(sc) {
+  var m = mappings[sc];
+  if (!m) return;
+  fetch('/api/test', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ircc: m.ircc, command: m.command })
+  }).then(function(r) { return r.json(); })
+    .then(function(d) {
+      toast(d.ok ? 'Sent: ' + m.command : 'Failed: ' + m.command, d.ok ? 'success' : 'error');
+    })
+    .catch(function() { toast('Request failed', 'error'); });
+}
+
+// ===================== SAVE =====================
+
+function saveMappings(cb) {
   fetch('/api/mappings', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(mappings)
   }).then(function(r) { return r.json(); })
     .then(function(d) {
-      if (d.ok) { toast('Mappings saved'); renderMappings(); }
-      else { toast('Save failed: ' + d.error, true); }
+      if (d.ok) { toast('Saved', 'success'); if (cb) cb(); }
+      else { toast('Save failed: ' + d.error, 'error'); }
     })
-    .catch(function(e) { toast('Save failed', true); });
+    .catch(function() { toast('Save failed', 'error'); });
 }
 
-// --- Debug Mode ---
+// ===================== DEBUG TOGGLE =====================
+
 function toggleDebug() {
   debugMode = !debugMode;
   fetch('/api/settings', {
@@ -663,10 +832,10 @@ function toggleDebug() {
     .then(function(d) {
       if (d.ok) {
         document.getElementById('mqttTopic').textContent = d.mqtt_topic;
-        toast(debugMode ? 'Debug mode ON' : 'Production mode');
+        toast(debugMode ? 'Debug mode ON' : 'Production mode', debugMode ? 'error' : 'success');
       }
     })
-    .catch(function(e) { toast('Toggle failed', true); });
+    .catch(function() { toast('Toggle failed', 'error'); });
   updateDebugUI();
 }
 
@@ -676,18 +845,20 @@ function updateDebugUI() {
   var ld = document.getElementById('labelDebug');
   if (debugMode) {
     track.classList.add('active');
-    lp.style.opacity = '0.3';
-    ld.style.opacity = '1';
+    lp.style.opacity = '0.3'; ld.style.opacity = '1';
   } else {
     track.classList.remove('active');
-    lp.style.opacity = '1';
-    ld.style.opacity = '0.3';
+    lp.style.opacity = '1'; ld.style.opacity = '0.3';
   }
 }
 
-// --- Live Feed ---
+// ===================== LIVE FEED =====================
+
 function pollEvents() {
-  fetch('/api/events')
+  var url = '/api/events';
+  if (lastPollTs) url += '?last_ts=' + encodeURIComponent(lastPollTs);
+
+  fetch(url)
     .then(function(r) { return r.json(); })
     .then(function(events) {
       if (!events.length) return;
@@ -696,34 +867,70 @@ function pollEvents() {
       if (empty) empty.remove();
 
       events.forEach(function(ev) {
-        var exists = feedItems.some(function(f) { return f.ts === ev.timestamp; });
-        if (exists) return;
-
-        feedItems.unshift({ ts: ev.timestamp });
-        if (feedItems.length > MAX_FEED) feedItems.pop();
-
+        lastPollTs = ev.timestamp;
         var t = ev.timestamp.split('T')[1].split('.')[0];
         var sc = ev.key.key_code_hex;
         var cmd = ev.key.command || 'unmapped';
         var mapped = ev.key.mapped;
 
+        // Track last unmapped scancode
+        if (!mapped) {
+          lastUnmappedScancode = sc;
+          updateLastButton();
+        }
+
+        // Highlight active row in table
+        if (mapped) highlightRow(sc);
+
         var el = document.createElement('div');
         el.className = 'feed-item';
-        el.innerHTML = '<span class="feed-time">' + t + '</span>'
-          + '<span><span class="feed-code">' + sc + '</span> '
-          + '<span class="feed-command' + (mapped ? '' : ' unmapped') + '">' + cmd + '</span></span>'
-          + '<span class="feed-dot ' + (mapped ? 'mapped' : 'unmapped') + '"></span>';
+
+        var leftHtml = '<span class="feed-time">' + t + '</span>'
+          + '<span class="feed-code">' + sc + '</span>';
+
+        if (mapped) {
+          leftHtml += '<span class="feed-command" onclick="scrollToMapping(\'' + sc + '\')">' + cmd + '</span>';
+        } else {
+          leftHtml += '<span class="feed-command unmapped">' + cmd + '</span>';
+        }
+
+        var rightHtml = '';
+        if (!mapped) {
+          rightHtml += '<button class="btn btn-adopt" onclick="adoptFromFeed(\'' + sc + '\')" title="Add mapping for this scancode">+</button>';
+        }
+        rightHtml += '<span class="feed-dot ' + (mapped ? 'mapped' : 'unmapped') + '"></span>';
+
+        el.innerHTML = '<div class="feed-left">' + leftHtml + '</div><div class="feed-right">' + rightHtml + '</div>';
         feed.insertBefore(el, feed.firstChild);
 
-        while (feed.children.length > MAX_FEED) {
-          feed.removeChild(feed.lastChild);
-        }
+        while (feed.children.length > MAX_FEED) feed.removeChild(feed.lastChild);
       });
     })
     .catch(function(){});
 }
 
-// --- Status ---
+// ===================== HIGHLIGHT & SCROLL =====================
+
+function highlightRow(sc) {
+  var id = 'row-' + sc.replace('0x','');
+  var row = document.getElementById(id);
+  if (!row) return;
+  row.classList.remove('active-pulse');
+  void row.offsetWidth; // force reflow
+  row.classList.add('active-pulse');
+  setTimeout(function() { row.classList.remove('active-pulse'); }, 1500);
+}
+
+function scrollToMapping(sc) {
+  var id = 'row-' + sc.replace('0x','');
+  var row = document.getElementById(id);
+  if (!row) return;
+  row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  highlightRow(sc);
+}
+
+// ===================== STATUS =====================
+
 function pollStatus() {
   fetch('/api/status')
     .then(function(r) { return r.json(); })
@@ -741,18 +948,19 @@ function pollStatus() {
     .catch(function(){});
 }
 
-// --- Toast ---
-function toast(msg, err) {
+// ===================== TOAST =====================
+
+function toast(msg, type) {
   var el = document.getElementById('toast');
   el.textContent = msg;
-  el.className = 'toast show' + (err ? ' error' : '');
+  el.className = 'toast show' + (type === 'error' ? ' error' : type === 'success' ? ' success' : '');
   setTimeout(function() { el.className = 'toast'; }, 2500);
 }
 
 function clearFeed() {
   feedItems = [];
-  var feed = document.getElementById('liveFeed');
-  feed.innerHTML = '<div class="feed-empty">Waiting for key events...</div>';
+  lastPollTs = '';
+  document.getElementById('liveFeed').innerHTML = '<div class="feed-empty">Waiting for key events...</div>';
 }
 
 init();
