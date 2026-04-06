@@ -118,8 +118,8 @@ IRCC_CODES = {
     0x7000c: ('power', 'AAAAAQAAAAEAAAAVAw=='),
     0x7001d: ('input', 'AAAAAQAAAAEAAAAlAw=='),
     0x70004: ('options', 'AAAAAgAAAJcAAAA2Aw=='),
-    0x70011: ('display', 'AAAAAQAAAAEAAAAAw=='),
-    0x70013: ('netflix', 'AAAAAgAAABoAAABbAw=='),
+    0x70011: ('netflix', 'AAAAAgAAABoAAABbAw=='),
+    0x70013: ('youtube', 'AAAAAgAAAMnAAABLAw=='),
 
     # Color buttons (HID Keyboard: mapped via FLIRC)
     0x70015: ('red', 'AAAAAgAAAJcAAAAlAw=='),
@@ -128,8 +128,8 @@ IRCC_CODES = {
     0x70005: ('blue', 'AAAAAgAAAJcAAAAoAw=='),
 
     # Channel / HDMI (HID Keyboard: mapped via FLIRC)
-    0x70017: ('channelup', 'AAAAAQAAAAEAAAA+Aw=='),
-    0x70019: ('channeldown', 'AAAAAQAAAAEAAAA9Aw=='),
+    0x7004b: ('channelup', 'AAAAAQAAAAEAAAA+Aw=='),
+    0x7004e: ('channeldown', 'AAAAAQAAAAEAAAA9Aw=='),
     0x70018: ('hdmi1', 'AAAAAQAAAAEAAABAAw=='),
     0x7001a: ('hdmi2', 'AAAAAQAAAAEAAABBAw=='),
 }
