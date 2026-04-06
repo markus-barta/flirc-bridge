@@ -75,66 +75,63 @@ CONFIG = {
 }
 
 # Sony IRCC command mapping
-# Maps hardware scancodes (or Linux key codes) to Sony IRCC commands
+# Maps hardware scancodes to Sony IRCC commands
+# All codes are HID Usage IDs captured via FLIRC USB receiver:
+#   0x700xx = HID Keyboard page (buttons mapped to keyboard keys)
+#   0xc00xx = HID Consumer page (native media/volume keys)
 IRCC_CODES = {
-    # Volume (using hardware scancodes)
+    # Numbers (HID Keyboard: 0x1e=1, 0x1f=2, ..., 0x27=0)
+    0x7001e: ('num1', 'AAAAAQAAAAEAAAAAAw=='),
+    0x7001f: ('num2', 'AAAAAQAAAAEAAAABAw=='),
+    0x70020: ('num3', 'AAAAAQAAAAEAAAACAw=='),
+    0x70021: ('num4', 'AAAAAQAAAAEAAAADAw=='),
+    0x70022: ('num5', 'AAAAAQAAAAEAAAAEAw=='),
+    0x70023: ('num6', 'AAAAAQAAAAEAAAAFAw=='),
+    0x70024: ('num7', 'AAAAAQAAAAEAAAAGAw=='),
+    0x70025: ('num8', 'AAAAAQAAAAEAAAAHAw=='),
+    0x70026: ('num9', 'AAAAAQAAAAEAAAAIAw=='),
+    0x70027: ('num0', 'AAAAAQAAAAEAAAAJAw=='),
+
+    # Navigation (HID Keyboard: arrow keys + keypad enter)
+    0x70052: ('up', 'AAAAAQAAAAEAAAB0Aw=='),
+    0x70051: ('down', 'AAAAAQAAAAEAAAB1Aw=='),
+    0x70050: ('left', 'AAAAAQAAAAEAAAA0Aw=='),
+    0x7004f: ('right', 'AAAAAQAAAAEAAAAzAw=='),
+    0x70058: ('enter', 'AAAAAQAAAAEAAABlAw=='),
+    0x70029: ('back', 'AAAAAQAAAAEAAABjAw=='),
+    0x7004a: ('home', 'AAAAAQAAAAEAAABgAw=='),
+
+    # Volume (HID Consumer)
     0xc00e9: ('volumeup', 'AAAAAQAAAAEAAAASAw=='),
     0xc00ea: ('volumedown', 'AAAAAQAAAAEAAAATAw=='),
-    
-    # Numbers
-    2: ('num1', 'AAAAAQAAAAEAAAAAAw=='),
-    3: ('num2', 'AAAAAQAAAAEAAAABAw=='),
-    4: ('num3', 'AAAAAQAAAAEAAAACAw=='),
-    5: ('num4', 'AAAAAQAAAAEAAAADAw=='),
-    6: ('num5', 'AAAAAQAAAAEAAAAEAw=='),
-    7: ('num6', 'AAAAAQAAAAEAAAAFAw=='),
-    8: ('num7', 'AAAAAQAAAAEAAAAGAw=='),
-    9: ('num8', 'AAAAAQAAAAEAAAAHAw=='),
-    10: ('num9', 'AAAAAQAAAAEAAAAIAw=='),
-    11: ('num0', 'AAAAAQAAAAEAAAAJAw=='),
-    
-    # Navigation
-    103: ('up', 'AAAAAQAAAAEAAAB0Aw=='),
-    108: ('down', 'AAAAAQAAAAEAAAB1Aw=='),
-    105: ('left', 'AAAAAQAAAAEAAAA0Aw=='),
-    106: ('right', 'AAAAAQAAAAEAAAAzAw=='),
-    96: ('enter', 'AAAAAQAAAAEAAABlAw=='),
-    28: ('enter', 'AAAAAQAAAAEAAABlAw=='),
-    1: ('back', 'AAAAAQAAAAEAAABjAw=='),
-    102: ('home', 'AAAAAQAAAAEAAABgAw=='),
-    
-    # Volume (fallbacks)
-    113: ('mute', 'AAAAAQAAAAEAAAAUAw=='),
-    114: ('volumedown', 'AAAAAQAAAAEAAAATAw=='),
-    115: ('volumeup', 'AAAAAQAAAAEAAAASAw=='),  
-    
-    # Media
-    164: ('play', 'AAAAAQAAAAEAAAANAw=='),
-    166: ('stop', 'AAAAAQAAAAEAAAAOAw=='),
-    168: ('rewind', 'AAAAAQAAAAEAAAA4Aw=='),
-    208: ('fastforward', 'AAAAAQAAAAEAAAA5Aw=='),
-    163: ('next', 'AAAAAQAAAAEAAAAXAw=='),
-    165: ('previous', 'AAAAAQAAAAEAAAAYAw=='),
-    
-    # System
-    44: ('power', 'AAAAAQAAAAEAAAAVAw=='),
-    23: ('input', 'AAAAAQAAAAEAAAAlAw=='),
-    30: ('options', 'AAAAAgAAAJcAAAA2Aw=='),
-    139: ('display', 'AAAAAQAAAAEAAAAAw=='),
-    49: ('netflix', 'AAAAAgAAABoAAABbAw=='),
-    25: ('youtube', 'AAAAAgAAABoAAABbAw=='), 
-    
-    # Color buttons (using hardware scancodes)
+    0xc00e2: ('mute', 'AAAAAQAAAAEAAAAUAw=='),
+
+    # Media (HID Consumer)
+    0xc00cd: ('play', 'AAAAAQAAAAEAAAANAw=='),
+    0xc00b7: ('stop', 'AAAAAQAAAAEAAAAOAw=='),
+    0xc00b4: ('rewind', 'AAAAAQAAAAEAAAA4Aw=='),
+    0xc00b3: ('fastforward', 'AAAAAQAAAAEAAAA5Aw=='),
+    0xc00b5: ('next', 'AAAAAQAAAAEAAAAXAw=='),
+    0xc00b6: ('previous', 'AAAAAQAAAAEAAAAYAw=='),
+
+    # System (HID Keyboard: mapped via FLIRC)
+    0x7000c: ('power', 'AAAAAQAAAAEAAAAVAw=='),
+    0x7001d: ('input', 'AAAAAQAAAAEAAAAlAw=='),
+    0x70004: ('options', 'AAAAAgAAAJcAAAA2Aw=='),
+    0x70011: ('display', 'AAAAAQAAAAEAAAAAw=='),
+    0x70013: ('netflix', 'AAAAAgAAABoAAABbAw=='),
+
+    # Color buttons (HID Keyboard: mapped via FLIRC)
     0x70015: ('red', 'AAAAAgAAAJcAAAAlAw=='),
     0x7000a: ('green', 'AAAAAgAAAJcAAAAmAw=='),
     0x7001c: ('yellow', 'AAAAAgAAAJcAAAAnAw=='),
     0x70005: ('blue', 'AAAAAgAAAJcAAAAoAw=='),
 
-    # Channel
-    20: ('channelup', 'AAAAAQAAAAEAAAA+Aw=='),
-    47: ('channeldown', 'AAAAAQAAAAEAAAA9Aw=='),
-    17: ('hdmi1', 'AAAAAQAAAAEAAABAAw=='),
-    22: ('hdmi2', 'AAAAAQAAAAEAAABBAw=='),
+    # Channel / HDMI (HID Keyboard: mapped via FLIRC)
+    0x70017: ('channelup', 'AAAAAQAAAAEAAAA+Aw=='),
+    0x70019: ('channeldown', 'AAAAAQAAAAEAAAA9Aw=='),
+    0x70018: ('hdmi1', 'AAAAAQAAAAEAAABAAw=='),
+    0x7001a: ('hdmi2', 'AAAAAQAAAAEAAABBAw=='),
 }
 
 
