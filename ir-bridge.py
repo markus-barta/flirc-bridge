@@ -619,7 +619,11 @@ class IRBridge:
 
     def _send_and_report(self, ircc_code: str, command_name: str, key_code: int, input_type: str):
         """Send IRCC command and update stats/events (runs in background thread)."""
-        success = self._send_ircc_command(ircc_code, command_name)
+        if self.settings.get('debug_mode', False):
+            self.logger.info(f"Debug mode: suppressed {command_name} (not sent to TV)")
+            success = True  # pretend success for stats
+        else:
+            success = self._send_ircc_command(ircc_code, command_name)
 
         if success:
             self.stats['commands_sent'] += 1
