@@ -98,7 +98,7 @@ IRCC_CODES = {
     0x70050: ('left', 'AAAAAQAAAAEAAAA0Aw=='),
     0x7004f: ('right', 'AAAAAQAAAAEAAAAzAw=='),
     0x70058: ('enter', 'AAAAAQAAAAEAAABlAw=='),
-    0x70029: ('back', 'AAAAAQAAAAEAAABjAw=='),
+    0x70029: ('exit', 'AAAAAQAAAAEAAABjAw=='),
     0x7004a: ('home', 'AAAAAQAAAAEAAABgAw=='),
 
     # Volume (HID Consumer)
@@ -127,11 +127,9 @@ IRCC_CODES = {
     0x7001c: ('yellow', 'AAAAAgAAAJcAAAAnAw=='),
     0x70005: ('blue', 'AAAAAgAAAJcAAAAoAw=='),
 
-    # Channel / HDMI (HID Keyboard: mapped via FLIRC)
+    # Channel (HID Keyboard: mapped via FLIRC)
     0x7004b: ('channelup', 'AAAAAQAAAAEAAAA+Aw=='),
     0x7004e: ('channeldown', 'AAAAAQAAAAEAAAA9Aw=='),
-    0x70018: ('hdmi1', 'AAAAAQAAAAEAAABAAw=='),
-    0x7001a: ('hdmi2', 'AAAAAQAAAAEAAABBAw=='),
 }
 
 
