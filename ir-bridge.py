@@ -693,9 +693,11 @@ class IRBridge:
                 bridge.logger.info(f"Debug mode {'ON' if bridge.settings['debug_mode'] else 'OFF'} — topic: {bridge.mqtt_topic}")
             return jsonify({'ok': True, 'mqtt_topic': bridge.mqtt_topic})
 
-        @app.route('/api/events')
+        @app.route('/api/events', methods=['GET', 'DELETE'])
         def api_events():
-            # Return events newer than last_ts query param
+            if request.method == 'DELETE':
+                bridge.recent_events.clear()
+                return jsonify({'ok': True})
             last_ts = request.args.get('last_ts', '')
             events = list(bridge.recent_events)
             if last_ts:

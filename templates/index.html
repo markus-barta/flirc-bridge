@@ -980,9 +980,12 @@ function toast(msg, type) {
 }
 
 function clearFeed() {
-  feedItems = [];
-  lastPollTs = new Date().toISOString();
-  document.getElementById('liveFeed').innerHTML = '<div class="feed-empty">Waiting for key events...</div>';
+  fetch('/api/events', { method: 'DELETE' })
+    .then(function() {
+      feedItems = [];
+      lastPollTs = '';
+      document.getElementById('liveFeed').innerHTML = '<div class="feed-empty">Waiting for key events...</div>';
+    });
 }
 
 init();
