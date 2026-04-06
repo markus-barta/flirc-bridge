@@ -350,6 +350,44 @@ class IRBridge:
 
         self.logger.info("Home Assistant Discovery payloads published")
 
+    def _teardown_ha_discovery(self, topic_prefix: str):
+        """Remove HA discovery entities and mark offline for a topic prefix."""
+        if not self.mqtt_client:
+            return
+        node_id = "flirc_bridge_hsb2"
+        entity_ids = [
+            ("sensor", "last_key"), ("sensor", "cpu_usage"),
+            ("sensor", "memory_usage"), ("sensor", "disk_usage"),
+            ("sensor", "uptime"), ("binary_sensor", "status"),
+        ]
+        # Remove discovery entries
+        for etype, eid in entity_ids:
+            discovery_topic = f"homeassistant/{etype}/{node_id}/{eid}/config"
+            self.mqtt_client.publish(discovery_topic, "", retain=True)
+        # Mark offline
+        self.mqtt_client.publish(f"{topic_prefix}/availability", "offline", retain=True)
+        self.logger.info(f"HA Discovery removed, marked offline on {topic_prefix}")
+
+    def set_debug_mode(self, enabled: bool):
+        """Switch debug mode, updating MQTT topics and HA discovery."""
+        old_topic = self.mqtt_topic
+        self.settings['debug_mode'] = enabled
+        save_settings(self.settings)
+        new_topic = self.mqtt_topic
+
+        if old_topic != new_topic:
+            # Tear down old topic
+            self._teardown_ha_discovery(old_topic)
+            # Setup new topic
+            self.mqtt_client.publish(f"{new_topic}/availability", "online", retain=True)
+            if not enabled:
+                # Back to production — re-register HA discovery
+                self._setup_ha_discovery()
+            self.mqtt_client.subscribe(f"{new_topic}/commands")
+            self._publish_status()
+
+        self.logger.info(f"Debug mode {'ON' if enabled else 'OFF'} — topic: {new_topic}")
+
     def _on_mqtt_disconnect(self, client, userdata, flags, rc, properties=None):
         """MQTT disconnect callback (paho-mqtt v2 compatible)."""
         self.logger.warning(f"MQTT disconnected (rc={rc})")
@@ -688,9 +726,7 @@ class IRBridge:
                 return jsonify(bridge.settings)
             data = request.get_json()
             if 'debug_mode' in data:
-                bridge.settings['debug_mode'] = bool(data['debug_mode'])
-                save_settings(bridge.settings)
-                bridge.logger.info(f"Debug mode {'ON' if bridge.settings['debug_mode'] else 'OFF'} — topic: {bridge.mqtt_topic}")
+                bridge.set_debug_mode(bool(data['debug_mode']))
             return jsonify({'ok': True, 'mqtt_topic': bridge.mqtt_topic})
 
         @app.route('/api/events', methods=['GET', 'DELETE'])
