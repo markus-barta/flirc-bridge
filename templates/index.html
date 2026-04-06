@@ -27,15 +27,27 @@
   --sans: 'Segoe UI', 'Helvetica Neue', sans-serif;
 }
 
-html { font-size: 18px; }
+html, body {
+  font-size: 18px;
+  height: 100vh;
+  overflow: hidden;
+}
 
 body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--sans);
-  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   -webkit-font-smoothing: antialiased;
 }
+
+/* === SCROLLBARS === */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--panel-inset); }
+::-webkit-scrollbar-thumb { background: var(--amber-dim); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--amber); }
+* { scrollbar-width: thin; scrollbar-color: var(--amber-dim) var(--panel-inset); }
 
 body::after {
   content: '';
@@ -98,13 +110,17 @@ body::after {
   grid-template-columns: 1fr 380px;
   gap: 1px;
   background: var(--panel-border);
-  min-height: calc(100vh - 65px);
+  flex: 1;
+  overflow: hidden;
 }
-@media (max-width: 960px) { .main { grid-template-columns: 1fr; } }
+@media (max-width: 960px) { .main { grid-template-columns: 1fr; overflow: auto; } }
 
 .panel {
   background: var(--panel);
   padding: 1.25rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .panel-header {
@@ -158,10 +174,26 @@ body::after {
 .search-input:focus { outline: none; border-color: var(--amber-dim); }
 .search-input::placeholder { color: var(--text-dim); }
 
+/* === ADD FORM === */
+.add-form {
+  display: grid;
+  grid-template-columns: 120px 1fr 1fr auto auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.6rem 0;
+  border-bottom: 2px solid var(--amber-dim);
+  margin-bottom: 0.5rem;
+  flex-shrink: 0;
+}
+
+.add-form .edit-input { border-color: var(--panel-border); }
+.add-form .edit-input:focus { border-color: var(--amber-dim); }
+
 /* === TABLE === */
 .table-scroll {
   overflow-y: auto;
-  max-height: calc(100vh - 260px);
+  flex: 1;
+  min-height: 0;
 }
 
 .mapping-table {
@@ -353,7 +385,8 @@ body::after {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  max-height: calc(100vh - 260px);
+  flex: 1;
+  min-height: 0;
 }
 
 .feed-item {
@@ -432,7 +465,7 @@ body::after {
   gap: 1px;
   background: var(--panel-border);
 }
-.sidebar .panel { flex: 1; }
+.sidebar .panel:last-child { flex: 3; }
 
 /* === TOAST === */
 .toast {
@@ -489,9 +522,7 @@ body::after {
 
 /* === RESPONSIVE === */
 @media (max-width: 960px) {
-  .main { min-height: auto; }
-  .table-scroll { max-height: 55vh; }
-  .feed { max-height: 40vh; }
+  .main { min-height: 100vh; }
 }
 </style>
 </head>
@@ -520,6 +551,25 @@ body::after {
       </div>
       <span style="font-family:var(--mono);font-size:0.75rem;color:var(--text-dim)" id="mappingCount"></span>
     </div>
+    <div class="add-form">
+      <input class="edit-input" id="addScancode" placeholder="0x7001e" oninput="checkDupe()">
+      <input class="edit-input" id="addCommand" placeholder="command">
+      <input class="edit-input" id="addIrcc" placeholder="IRCC code">
+      <select class="edit-select" id="addGroup">
+        <option value="numbers">numbers</option>
+        <option value="navigation">navigation</option>
+        <option value="volume">volume</option>
+        <option value="media">media</option>
+        <option value="system" selected>system</option>
+        <option value="color">color</option>
+        <option value="channel">channel</option>
+      </select>
+      <div class="btn-group">
+        <button class="btn" id="btnLastInput" onclick="useLastInput()" title="Use last unmapped scancode" style="display:none">Last</button>
+        <button class="btn btn-save" onclick="addMapping()">Add</button>
+      </div>
+    </div>
+    <div class="dupe-warn" id="dupeWarn" style="display:none"></div>
     <div class="table-scroll" id="tableScroll">
       <table class="mapping-table">
         <thead>
@@ -532,33 +582,6 @@ body::after {
           </tr>
         </thead>
         <tbody id="mappingBody"></tbody>
-        <tfoot>
-          <tr class="add-row">
-            <td><input class="edit-input" id="addScancode" placeholder="0x7001e" oninput="checkDupe()"></td>
-            <td><input class="edit-input" id="addCommand" placeholder="command"></td>
-            <td><input class="edit-input" id="addIrcc" placeholder="AAAA...Aw=="></td>
-            <td>
-              <select class="edit-select" id="addGroup">
-                <option value="numbers">numbers</option>
-                <option value="navigation">navigation</option>
-                <option value="volume">volume</option>
-                <option value="media">media</option>
-                <option value="system" selected>system</option>
-                <option value="color">color</option>
-                <option value="channel">channel</option>
-              </select>
-            </td>
-            <td style="text-align:right">
-              <div class="btn-group" style="justify-content:flex-end">
-                <button class="btn" id="btnLastInput" onclick="useLastInput()" title="Use last unmapped scancode" style="display:none">Last</button>
-                <button class="btn btn-save" onclick="addMapping()">Add</button>
-              </div>
-            </td>
-          </tr>
-          <tr class="add-row" id="dupeRow" style="display:none">
-            <td colspan="5"><span class="dupe-warn" id="dupeWarn"></span></td>
-          </tr>
-        </tfoot>
       </table>
     </div>
   </div>
@@ -722,18 +745,17 @@ function clearAddForm() {
   document.getElementById('addScancode').value = '';
   document.getElementById('addCommand').value = '';
   document.getElementById('addIrcc').value = '';
-  document.getElementById('dupeRow').style.display = 'none';
+  document.getElementById('dupeWarn').style.display = 'none';
 }
 
 function checkDupe() {
   var sc = document.getElementById('addScancode').value.trim().toLowerCase();
-  var row = document.getElementById('dupeRow');
   var warn = document.getElementById('dupeWarn');
   if (sc && mappings[sc]) {
     warn.textContent = 'Duplicate: ' + sc + ' → "' + mappings[sc].command + '" (will overwrite on add)';
-    row.style.display = '';
+    warn.style.display = '';
   } else {
-    row.style.display = 'none';
+    warn.style.display = 'none';
   }
 }
 
@@ -959,7 +981,7 @@ function toast(msg, type) {
 
 function clearFeed() {
   feedItems = [];
-  lastPollTs = '';
+  lastPollTs = new Date().toISOString();
   document.getElementById('liveFeed').innerHTML = '<div class="feed-empty">Waiting for key events...</div>';
 }
 
