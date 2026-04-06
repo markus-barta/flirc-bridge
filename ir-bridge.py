@@ -408,33 +408,35 @@ class IRBridge:
         except Exception as e:
             self.logger.error(f"Failed to publish event: {e}")
     
-    def _publish_unknown_key(self, key_code: int, input_type: str):
-        """Publish unknown key code to MQTT for discovery."""
+    def _publish_raw_key(self, key_code: int, input_type: str, mapped: bool, command_name: str = None):
+        """Publish raw key event to MQTT for Home Assistant automation."""
         if not self.mqtt_client:
             return
-        
+
         try:
             event = {
                 'timestamp': datetime.now().isoformat(),
                 'version': VERSION,
                 'machine': 'hsb2',
-                'unknown_key': {
+                'key': {
                     'key_code': key_code,
                     'key_code_hex': hex(key_code),
                     'input_type': input_type,
-                },
-                'message': f'Unmapped {input_type} detected: {key_code} ({hex(key_code)})'
+                    'command': command_name,
+                    'mapped': mapped,
+                }
             }
-            
+
             self.mqtt_client.publish(
-                f"{CONFIG['mqtt_topic']}/unknown",
+                f"{CONFIG['mqtt_topic']}/raw",
                 json.dumps(event)
             )
-            
-            self.logger.info(f"Published unknown key {key_code} to MQTT")
-            
+
+            if not mapped:
+                self.logger.info(f"Published unmapped key {key_code} to MQTT")
+
         except Exception as e:
-            self.logger.error(f"Failed to publish unknown key: {e}")
+            self.logger.error(f"Failed to publish raw key: {e}")
     
     def _send_ircc_command(self, ircc_code: str, command_name: str) -> bool:
         """Send IRCC command to Sony TV."""
@@ -508,31 +510,34 @@ class IRBridge:
         # Lookup command
         if key_code not in IRCC_CODES:
             self.logger.info(f"Unknown {input_type}: {key_code} ({hex(key_code)})")
-            self._publish_unknown_key(key_code, input_type)
+            self._publish_raw_key(key_code, input_type, mapped=False)
             return
-        
+
         command_name, ircc_code = IRCC_CODES[key_code]
-        
+
         if is_hold:
             self.logger.debug(f"Key held: {command_name} ({input_type}: {key_code})")
         else:
             self.logger.info(f"Key pressed: {command_name} ({input_type}: {key_code})")
-            
+
         self.stats['keys_pressed'] += 1
         self.stats['last_key'] = command_name
-        
+
+        # Publish raw key for all presses (mapped and unmapped)
+        self._publish_raw_key(key_code, input_type, mapped=True, command_name=command_name)
+
         # Send to TV
         success = self._send_ircc_command(ircc_code, command_name)
-        
+
         if success:
             self.stats['commands_sent'] += 1
             self.stats['last_command'] = command_name
         else:
             self.stats['errors'] += 1
-        
+
         # Publish event
         self._publish_event(command_name, key_code, command_name, success, input_type)
-        
+
         # Immediate status update for Home Assistant responsiveness
         self._publish_status()
 

@@ -1,7 +1,7 @@
 # Product Requirements Document: FLIRC Bridge
 
 **Document ID:** FLIRC-BRIDGE-PRD-001
-**Version:** 0.3.1
+**Version:** 0.4.0
 **Status:** Active
 **Date:** 2026-02-01
 **Author:** Markus Barta
@@ -28,7 +28,7 @@ A lightweight Python-based bridge that converts Infrared (IR) remote signals rec
   - Publish real-time events and status.
   - **System Health Reporting**: Periodic heartbeat with CPU, RAM, Disk, and Uptime metrics.
   - **Home Assistant Discovery**: Automatic configuration of entities and availability tracking (LWT).
-  - Report unknown key codes for easy discovery/mapping.
+  - Publish all key events to `/raw` topic with `mapped` flag for HA automation.
   - Basic remote control (status requests, service restart).
 
 ### 3.2 Reliability & Performance
@@ -67,7 +67,7 @@ A lightweight Python-based bridge that converts Infrared (IR) remote signals rec
 - **Sub-topics**:
   - `/status`: Retained JSON payload with uptime, stats, and health.
   - `/event`: JSON payload per successful/failed command.
-  - `/unknown`: JSON payload for unmapped scancodes.
+  - `/raw`: JSON payload for all key events (with `mapped` flag).
   - `/control`: Input topic for `status` or `restart` commands.
 
 ## 5. Configuration (Environment Variables)

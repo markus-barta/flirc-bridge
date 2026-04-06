@@ -1,6 +1,6 @@
 # flirc-bridge
 
-[![Version](https://img.shields.io/badge/version-0.3.1-blue.svg)](./VERSION)
+[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](./VERSION)
 
 Convert IR remote signals (via FLIRC USB receiver) to Sony Bravia TV commands over HTTP.
 
@@ -85,7 +85,7 @@ Full mapping in `ir-bridge.py` (IRCC_CODES dictionary).
 | `home/hsb2/ir-bridge/events` | Event | Command execution details with scancodes |
 | `home/hsb2/ir-bridge/health` | Heartbeat | System metrics (CPU, RAM, Disk, Uptime) |
 | `home/hsb2/ir-bridge/availability` | LWT | `online` or `offline` |
-| `home/hsb2/ir-bridge/unknown` | Event | Unmapped key discovery |
+| `home/hsb2/ir-bridge/raw` | Event | All key events with `mapped` flag |
 | `home/hsb2/ir-bridge/commands` | Input | Remote control (status, restart) |
 
 ### Status Payload
