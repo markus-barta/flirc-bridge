@@ -587,33 +587,40 @@ class IRBridge:
         
         try:
             self.logger.info("Starting input event loop")
-            
+
             scancode = None
+            last_scancode = {}  # linux_keycode -> hardware_scancode
             for event in self.input_device.read_loop():
                 if not self.running:
                     break
-                
-                # Capture MSC_SCAN for debugging/discovery
+
+                # Capture MSC_SCAN (arrives before EV_KEY for key_down)
                 if event.type == ecodes.EV_MSC and event.code == ecodes.MSC_SCAN:
                     scancode = event.value
                     self.logger.debug(f"Hardware Scancode received: {hex(scancode)}")
-                
+
                 # Process key press and hold events
                 if event.type == ecodes.EV_KEY:
                     key_event = categorize(event)
-                    
-                    # We prefer hardware scancodes if available, 
-                    # fallback to Linux key scancodes
-                    target_code = scancode if scancode is not None else key_event.scancode
-                    
+                    linux_code = key_event.scancode
+
+                    if scancode is not None:
+                        # key_down: MSC_SCAN preceded this event
+                        target_code = scancode
+                        last_scancode[linux_code] = scancode
+                        scancode = None
+                    elif linux_code in last_scancode:
+                        # key_hold: reuse hardware scancode from key_down
+                        target_code = last_scancode[linux_code]
+                    else:
+                        # fallback to linux keycode
+                        target_code = linux_code
+
                     if key_event.keystate == key_event.key_down:
-                        self.logger.info(f"Input: Code {hex(target_code) if scancode else target_code} ({key_event.keycode})")
+                        self.logger.info(f"Input: Code {hex(target_code)} ({key_event.keycode})")
                         self._handle_key(target_code, is_hold=False)
                     elif key_event.keystate == key_event.key_hold:
                         self._handle_key(target_code, is_hold=True)
-                    
-                    # Reset scancode for next event pair
-                    scancode = None
                         
         except Exception as e:
             self.logger.error(f"Input read error: {e}")
