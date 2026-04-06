@@ -801,7 +801,7 @@ function renderMappings() {
   var shown = 0;
   body.innerHTML = keys.map(function(sc) {
     var m = mappings[sc];
-    var text = sc + ' ' + m.command + ' ' + m.group;
+    var text = sc + ' ' + m.command + ' ' + m.group + ' ' + (m.action || 'direct') + ' ' + (m.notes || '') + ' ' + m.ircc + ' ' + (m.debounce_ms || '');
     if (filter && text.toLowerCase().indexOf(filter) === -1) return '';
     shown++;
     var db = m.debounce_ms;
