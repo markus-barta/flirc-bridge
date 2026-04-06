@@ -610,7 +610,15 @@ class IRBridge:
         # Publish raw key for all presses (mapped and unmapped)
         self._publish_raw_key(key_code, input_type, mapped=True, command_name=command_name)
 
-        # Send to TV
+        # Send to TV in background thread (never block input loop)
+        threading.Thread(
+            target=self._send_and_report,
+            args=(ircc_code, command_name, key_code, input_type),
+            daemon=True
+        ).start()
+
+    def _send_and_report(self, ircc_code: str, command_name: str, key_code: int, input_type: str):
+        """Send IRCC command and update stats/events (runs in background thread)."""
         success = self._send_ircc_command(ircc_code, command_name)
 
         if success:
@@ -619,10 +627,7 @@ class IRBridge:
         else:
             self.stats['errors'] += 1
 
-        # Publish event
         self._publish_event(command_name, key_code, command_name, success, input_type)
-
-        # Immediate status update for Home Assistant responsiveness
         self._publish_status()
 
     def _setup_input(self) -> bool:
