@@ -717,8 +717,8 @@ body::after {
           <input class="setting-input" id="setRetryCount" type="number" min="0" max="10">
         </div>
         <div class="setting-item">
-          <span class="setting-label">Retry Delay (s)</span>
-          <input class="setting-input" id="setRetryDelay" type="number" min="0" step="0.5">
+          <span class="setting-label">Retry Delay (ms)</span>
+          <input class="setting-input" id="setRetryDelay" type="number" min="0" step="100">
         </div>
         <div class="setting-item" style="grid-column: span 2">
           <span class="setting-label">Log Level</span>
@@ -925,7 +925,7 @@ function loadSettings() {
       document.getElementById('setDebounce').value = s.debounce_ms || 100;
       document.getElementById('setHoldThrottle').value = s.hold_throttle_ms || 200;
       document.getElementById('setRetryCount').value = s.retry_count || 3;
-      document.getElementById('setRetryDelay').value = s.retry_delay || 1.0;
+      document.getElementById('setRetryDelay').value = Math.round((s.retry_delay || 1.0) * 1000);
       document.getElementById('setLogLevel').value = s.log_level || 'INFO';
       document.getElementById('setHaUrl').value = s.ha_url || '';
       document.getElementById('setHaToken').value = s.ha_token || '';
@@ -937,7 +937,7 @@ function saveSettings() {
     debounce_ms: parseInt(document.getElementById('setDebounce').value) || 100,
     hold_throttle_ms: parseInt(document.getElementById('setHoldThrottle').value) || 200,
     retry_count: parseInt(document.getElementById('setRetryCount').value) || 3,
-    retry_delay: parseFloat(document.getElementById('setRetryDelay').value) || 1.0,
+    retry_delay: (parseInt(document.getElementById('setRetryDelay').value) || 1000) / 1000,
     log_level: document.getElementById('setLogLevel').value || 'INFO',
     ha_url: document.getElementById('setHaUrl').value.trim(),
     ha_token: document.getElementById('setHaToken').value.trim(),
