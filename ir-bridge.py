@@ -815,46 +815,50 @@ class IRBridge:
             ha_token = bridge.settings.get('ha_token', '')
             if not ha_url or not ha_token:
                 return jsonify({'ok': False, 'error': 'Set HA URL and token in settings first'}), 400
+            headers = {'Authorization': f'Bearer {ha_token}'}
+            search_terms = ['ir-bridge', 'ir_bridge', 'flirc_bridge', 'flirc', 'last_key']
             try:
-                r = requests.get(
-                    f"{ha_url}/api/config/automation/config",
-                    headers={'Authorization': f'Bearer {ha_token}'},
-                    timeout=10
-                )
-                if r.status_code == 404:
-                    # Try alternative: get all automations via states
-                    r = requests.get(
-                        f"{ha_url}/api/states",
-                        headers={'Authorization': f'Bearer {ha_token}'},
-                        timeout=10
-                    )
-                    if r.status_code != 200:
-                        return jsonify({'ok': False, 'error': f'HA API returned {r.status_code}'}), 502
-                    states = r.json()
-                    automations = [s for s in states if s['entity_id'].startswith('automation.')]
-                    results = []
-                    for a in automations:
-                        attrs = json.dumps(a.get('attributes', {}))
-                        if 'ir-bridge' in attrs or 'ir_bridge' in attrs:
-                            results.append({
-                                'entity_id': a['entity_id'],
-                                'name': a.get('attributes', {}).get('friendly_name', ''),
-                                'state': a.get('state', ''),
-                            })
-                    return jsonify({'ok': True, 'automations': results, 'source': 'states'})
+                # Get all automation entity IDs from states
+                r = requests.get(f"{ha_url}/api/states", headers=headers, timeout=10)
                 if r.status_code != 200:
                     return jsonify({'ok': False, 'error': f'HA API returned {r.status_code}'}), 502
-                configs = r.json()
+                states = r.json()
+                automations = [s for s in states if s['entity_id'].startswith('automation.')]
+
                 results = []
-                for auto_id, config in configs.items():
-                    config_str = json.dumps(config)
-                    if 'ir-bridge' in config_str or 'ir_bridge' in config_str:
+                for a in automations:
+                    auto_id = a.get('attributes', {}).get('id', '')
+                    if not auto_id:
+                        continue
+                    # Fetch full config for each automation
+                    cr = requests.get(f"{ha_url}/api/config/automation/config/{auto_id}", headers=headers, timeout=5)
+                    if cr.status_code != 200:
+                        continue
+                    config = cr.json()
+                    config_str = json.dumps(config).lower()
+                    if any(term in config_str for term in search_terms):
+                        # Extract trigger details
+                        triggers = config.get('triggers', config.get('trigger', []))
+                        if isinstance(triggers, dict):
+                            triggers = [triggers]
+                        trigger_info = []
+                        for t in triggers:
+                            t_str = json.dumps(t)
+                            if any(term in t_str.lower() for term in search_terms):
+                                to_val = t.get('to', '')
+                                entity = t.get('entity_id', '')
+                                if isinstance(entity, list):
+                                    entity = ', '.join(entity)
+                                if isinstance(to_val, list):
+                                    to_val = ', '.join(str(v) for v in to_val)
+                                trigger_info.append(f"{entity} = {to_val}" if to_val else str(entity))
                         results.append({
-                            'id': auto_id,
-                            'alias': config.get('alias', auto_id),
-                            'triggers': [t for t in config.get('trigger', []) if 'ir-bridge' in json.dumps(t)],
+                            'name': config.get('alias', a['entity_id']),
+                            'entity_id': a['entity_id'],
+                            'state': a.get('state', ''),
+                            'triggers': trigger_info,
                         })
-                return jsonify({'ok': True, 'automations': results, 'source': 'config'})
+                return jsonify({'ok': True, 'automations': results})
             except requests.exceptions.RequestException as e:
                 return jsonify({'ok': False, 'error': str(e)}), 502
 

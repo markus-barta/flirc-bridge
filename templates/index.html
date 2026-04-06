@@ -966,9 +966,10 @@ function scanHA() {
         if (!d.ok) { el.innerHTML = '<span style="color:var(--red)">' + d.error + '</span>'; return; }
         if (!d.automations.length) { el.innerHTML = '<span style="color:var(--text-dim)">No automations found referencing ir-bridge</span>'; return; }
         el.innerHTML = d.automations.map(function(a) {
-          var name = a.alias || a.name || a.entity_id || a.id;
+          var name = a.name || a.entity_id;
           var state = a.state ? ' <span class="ha-state">[' + a.state + ']</span>' : '';
-          return '<div class="ha-result"><span class="ha-name">' + name + '</span>' + state + '</div>';
+          var triggers = a.triggers && a.triggers.length ? '<br><span style="color:var(--text-dim);font-size:0.65rem">→ ' + a.triggers.join(', ') + '</span>' : '';
+          return '<div class="ha-result"><span class="ha-name">' + name + '</span>' + state + triggers + '</div>';
         }).join('');
         toast(d.automations.length + ' automation(s) found', 'success');
       })
