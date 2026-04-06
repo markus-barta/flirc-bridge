@@ -868,8 +868,10 @@ function editGroup(el, sc) {
   el.innerHTML = '<select class="edit-select">' + opts + '</select>';
   var sel = el.querySelector('select');
   sel.focus();
-
+  var saved = false;
   function save() {
+    if (saved) return;
+    saved = true;
     var val = sel.value;
     if (val !== current) {
       mappings[sc].group = val;
@@ -911,13 +913,24 @@ function editAction(el, sc) {
   var opts = ['direct','mqtt','disabled'].map(function(a) {
     return '<option value="' + a + '"' + (a === current ? ' selected' : '') + '>' + a + '</option>';
   }).join('');
-  el.outerHTML = '<select class="edit-select" onchange="saveAction(this,\'' + sc + '\')" onblur="renderMappings()">' + opts + '</select>';
-  el.parentElement.querySelector('select').focus();
-}
-
-function saveAction(sel, sc) {
-  mappings[sc].action = sel.value;
-  saveMappings(function() { renderMappings(); });
+  var td = el.parentElement;
+  td.innerHTML = '<select class="edit-select">' + opts + '</select>';
+  var sel = td.querySelector('select');
+  sel.focus();
+  var saved = false;
+  function save() {
+    if (saved) return;
+    saved = true;
+    var val = sel.value;
+    if (val !== current) {
+      mappings[sc].action = val;
+      saveMappings(function() { renderMappings(); });
+    } else {
+      renderMappings();
+    }
+  }
+  sel.addEventListener('change', save);
+  sel.addEventListener('blur', save);
 }
 
 // ===================== SETTINGS =====================
